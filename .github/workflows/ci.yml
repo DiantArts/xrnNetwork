@@ -1,0 +1,117 @@
+name: continous integration
+
+on: # set up the requirments to trigger the workflow
+  push:
+    branches:
+      - main
+
+env: # set up the environment variables
+  CMAKE_VERSION: 3.23.0
+  NINJA_VERSION: 1.10.2
+  CCACHE_VERSION: 4.6
+  CONAN_SYSREQUIRES_MODE: enabled
+  CONAN_USER_HOME: '${{ github.workspace }}/conan-cache'
+  CONAN_USER_HOME_SHORT: '${{ github.workspace }}/conan-cache/short'
+
+jobs:
+  tests: # Matrix CI job
+    name: '${{ matrix.config.name }}, ${{ matrix.build_type }}'
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false # Do not stop all jobs at first error
+      matrix: # Define the matrix config
+        build_type:
+          - Release
+          - Debug
+        config:
+          - {
+            name: 'ubuntu-latest-gcc',
+            os: ubuntu-22.04,
+            cc: 'gcc-11', cxx: 'g++-11'
+          }
+          - {
+            name: 'ubuntu-latest-clang',
+            os: ubuntu-latest,
+            cc: 'clang-13', cxx: 'clang++-13'
+          }
+          #- {
+          #  name: 'windows-latest-msvc',
+          #  os: windows-latest,
+          #  cc: 'cl', cxx: 'cl',
+          #  environment_script: 'C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat'
+          #}
+          #- {
+          #  name: 'windows-latest-mingw',
+          #  os: windows-latest,
+          #  cc: 'gcc', cxx: 'g++'
+          #}
+          #- {
+          #  name: 'macos-latest-clang',
+          #  os: macos-latest,
+          #  cc: 'clang-13', cxx: 'clang++-13'
+          #}
+    steps:
+      - uses: actions/checkout@v3 # Clone the repository
+        with:
+          ref: main # git switch main
+
+      - name: 'Download dependencies'
+        if: startsWith(matrix.config.os, 'ubuntu') # Only run this if on ubuntu
+        run: |
+          sudo apt-get install -y python3-pip cppcheck clang-tidy ccache moreutils cmake gcovr ${{ matrix.config.cxx }}
+          pip install conan ninja
+
+      - name: 'Configure CMake'
+        run: |
+          cmake \
+          -S. \
+          -B./.build \
+          -GNinja \
+          -DCMAKE_BUILD_TYPE:STRING=${{ matrix.build_type }} \
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+          -DWARNING_AS_ERRORS=true \
+          -DENABLE_STD_PCH=false \
+          -DENABLE_PCH=false \
+          -DENABLE_STATIC_ANALYSIS=false \
+          -DENABLE_CPPCHECK=false \
+          -DENABLE_CLANG_TIDY=false \
+          -DENABLE_SANITIZERS=false \
+          -DENABLE_SANITIZER_ADDRESS=true \
+          -DENABLE_SANITIZER_LEAK=true \
+          -DENABLE_SANITIZER_UNDEFINED_BEHAVIOR=true \
+          -DENABLE_TESTING=true \
+          -DENABLE_COVERAGE=true \
+          -DENABLE_UNIT_TESTING=true \
+          -DENABLE_BENCHMARK=false \
+          -DENABLE_FUZZ_TESTING=false \
+          -DRUN_UNIT_TESTS=false \
+          -DENABLE_OUTPUT_DIR=false \
+          -DENABLE_BINARY=true \
+          -DENABLE_STATIC_LIBRARY=false \
+          -DENABLE_SHARED_LIBRARY=false
+        env: # enviroment variable to compilers (cmake might be using those)
+          CC: ${{ matrix.config.cc }}
+          CXX: ${{ matrix.config.cxx }}
+
+      - name: 'Build'
+        run: |
+          cmake --build ./.build --config ${{ matrix.build_type }}
+
+      - name: 'Unix - Test' # run tests
+        working-directory: ${{ github.workspace }}/.build
+        if: runner.os != 'Windows'
+        run: |
+          ctest -C ${{ matrix.build_type }}
+
+      - name: 'Unix - Coverage' # run tests if tests are successful
+        working-directory: ${{ github.workspace }}/.build
+        if: runner.os != 'Windows'
+        run: |
+          gcovr -j ${{ env.nproc }} --root ../ . --delete -e '${{ github.workspace }}/.build' -e '${{ github.workspace }}/conan-cache' --xml-pretty --xml coverage-${{ matrix.config.name }}-${{ matrix.build_type }}.xml --print-summary --gcov-executable 'gcov-11'
+
+      - name: 'Upload coverage to codecov' # use the recommended action to upload the coverage to codecov
+        uses: codecov/codecov-action@v2
+        with:
+          verbose: true
+          files: ./.build/coverage-*.xml
