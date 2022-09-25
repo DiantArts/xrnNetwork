@@ -1,0 +1,65 @@
+#!/bin/bash
+
+HTAG="v0.0.0" # HIGHEST_TAG
+MAJOR_VERSION=0
+MINOR_VERSION=0
+PATCH_VERSION=0
+
+
+# -----------------------------------------------------------------------------
+
+extractNumberInVersion() {
+    VERSION=""
+    TMP_VERSION=$1
+
+    # remove first version numbers
+    for ((i = 0; i < $2; i++)); do
+        TMP_VERSION=${TMP_VERSION:1}
+        while [[ ${TMP_VERSION:0:1} =~ [0-9] ]]; do
+            TMP_VERSION=${TMP_VERSION:1}
+        done
+    done
+
+    # extract the current version numbers
+    TMP_VERSION=${TMP_VERSION:1}
+    while [[ ${TMP_VERSION:0:1} =~ [0-9] ]]; do
+        VERSION+=${TMP_VERSION:0:1}
+        TMP_VERSION=${TMP_VERSION:1}
+    done
+
+    return ${VERSION}
+}
+
+
+
+# -----------------------------------------------------------------------------
+
+for TAG in $(git tag); do
+    if [[ $TAG =~ v[0-9]*\.[0-9]*\.[0-9]*(-.*|) ]]; then
+        extractNumberInVersion ${TAG} 0
+        CURRENT_MAJOR_VERSION=$?
+        extractNumberInVersion ${TAG} 1
+        CURRENT_MINOR_VERSION=$?
+        extractNumberInVersion ${TAG} 2
+        CURRENT_PATCH_VERSION=$?
+
+        IS_GREATER=false
+        if [[ ${MAJOR_VERSION} -eq ${CURRENT_MAJOR_VERSION} ]]; then
+            if [[ ${MINOR_VERSION} -eq ${CURRENT_MINOR_VERSION} ]]; then
+                if [[ ${PATCH_VERSION} -le ${CURRENT_PATCH_VERSION} ]]; then
+                    IS_GREATER=true
+                fi
+            elif [[ ${MINOR_VERSION} -le ${CURRENT_MINOR_VERSION} ]]; then
+                IS_GREATER=true
+            fi
+        elif [[ ${MAJOR_VERSION} -le ${CURRENT_MAJOR_VERSION} ]]; then
+            IS_GREATER=true
+        fi
+        if [[ ${IS_GREATER} == true ]]; then
+            MAJOR_VERSION=${CURRENT_MAJOR_VERSION}
+            MINOR_VERSION=${CURRENT_MINOR_VERSION}
+            PATCH_VERSION=${CURRENT_PATCH_VERSION}
+        fi
+    fi
+done
+echo "v${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"

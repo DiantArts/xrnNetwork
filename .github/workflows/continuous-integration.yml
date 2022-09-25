@@ -1,0 +1,56 @@
+name: Continous Integration
+
+on: # set up the requirments to trigger the workflow
+  push:
+    branches:
+      - main
+
+env: # set up the environment variables
+  CMAKE_VERSION: 3.23.0
+  NINJA_VERSION: 1.10.2
+  CCACHE_VERSION: 4.6
+  CONAN_SYSREQUIRES_MODE: enabled
+  CONAN_USER_HOME: '${{ github.workspace }}/.conan'
+
+jobs:
+  tests: # Matrix CI job
+    name: '${{ matrix.config.name }}, ${{ matrix.build_type }}'
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false # Do not stop all jobs at first error
+      matrix: # Define the matrix config
+        build_type:
+          - Release
+          - Debug
+        config:
+          - {
+            name: 'ubuntu-latest-gcc',
+            os: ubuntu-22.04,
+            cc: 'gcc', cxx: 'g++',
+            packages: 'g++'
+          }
+          - {
+            name: 'ubuntu-latest-clang',
+            os: ubuntu-22.04,
+            cc: 'clang', cxx: 'clang++',
+            packages: 'llvm'
+          }
+    steps:
+      - uses: actions/checkout@v3 # Clone the repository
+        with:
+          ref: main # git switch main
+
+      - name: 'Download dependencies'
+        if: startsWith(matrix.config.os, 'ubuntu') # Only run this if on ubuntu
+        run: |
+          sudo apt-get install -y python3-pip cppcheck clang-tidy ccache moreutils cmake gcovr catch2 ${{ matrix.config.packages }}
+          pip install conan ninja
+
+      - name: 'Build and run tests'
+        run: ./.toolchain/compile tests --type=${{ matrix.build_type }} --cxx-compiler=${{ matrix.config.cxx }} --cc-compiler=${{ matrix.config.cc }}
+
+      - name: 'Upload coverage to codecov' # use the recommended action to upload the coverage to codecov
+        uses: codecov/codecov-action@v2
+        with:
+          verbose: true
+          files: ./.build/coverage.xml
