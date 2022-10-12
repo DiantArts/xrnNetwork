@@ -1,13 +1,16 @@
+if (CMAKE_CURRENT_LIST_DIR MATCHES "-src/sources$")
+    include(${XRN_BUILD_DIR}/_deps/${XRN_BIN_NAME}/conanbuildinfo.cmake)
+else ()
+    include(${XRN_BUILD_DIR}/conanbuildinfo.cmake)
+endif ()
+conan_basic_setup(TARGETS)
+
+include(CMakeFindDependencyMacro)
 foreach(library IN LISTS XRN_LIBRARIES_REQUIREMENTS)
-    find_package(${library} REQUIRED)
+    find_dependency(${library} REQUIRED)
 endforeach()
 
 add_library(XRN_${XRN_BIN_NAME}_BIN_OBJECTS OBJECT ${XRN_MAIN} ${XRN_SOURCES} ${XRN_FRAGMENT} ${XRN_VERTEX} ${XRN_HEADERS})
-target_link_libraries(
-    ${XRN_BIN_NAME}_project_dependencies
-    INTERFACE
-    ${XRN_LIBRARIES_DEPENDENCIES}
-)
 
 if (ENABLE_PCH)
     target_precompile_headers(
@@ -18,13 +21,20 @@ if (ENABLE_PCH)
 endif ()
 
 if (ENABLE_BINARY)
-    add_executable(${XRN_BIN_NAME} $<TARGET_OBJECTS:XRN_${XRN_BIN_NAME}_BIN_OBJECTS>)
     target_link_libraries(
-        ${XRN_BIN_NAME}
-        PRIVATE
+        XRN_${XRN_BIN_NAME}_BIN_OBJECTS
+        PUBLIC
             ${XRN_BIN_NAME}_project_options
             ${XRN_BIN_NAME}_project_warnings
             ${XRN_BIN_NAME}_project_dependencies
+            ${XRN_LIBRARIES_DEPENDENCIES}
+    )
+    add_executable(${XRN_BIN_NAME} $<TARGET_OBJECTS:XRN_${XRN_BIN_NAME}_BIN_OBJECTS>)
+
+    target_link_libraries(
+        ${XRN_BIN_NAME}
+        PRIVATE
+            XRN_${XRN_BIN_NAME}_BIN_OBJECTS
     )
 endif ()
 

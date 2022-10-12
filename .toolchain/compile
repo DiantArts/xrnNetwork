@@ -17,7 +17,7 @@ buildDir=.build
 cxxVersion=23
 buildType=Release
 binaryName=$(basename `git rev-parse --show-toplevel`)
-binaryPath=${buildDir}/sources/${binaryName}
+binaryPath=${buildDir}/sources/bin/${binaryName}
 parallel=$(nproc)
 
 # -------------------------------------------------------------------------------------------------
@@ -71,6 +71,7 @@ Actions:
     remake rebuild re             Clean and build everything again
     tests run_tests unit_tests  * Rebuild to generate and run tests informations
     cov coverage                  Only run the coverage and nothing else
+    clear-logs logs log           Clear the log files archived
 EOF
 }
 
@@ -323,6 +324,7 @@ while [ $# -gt 0 ]; do
     "'re'"|"'remake'"|"'rebuild'") cleanNeeded=true; setupNeeded=true ;;
     "'test'"|"'tests'"|"'run_tests'"|"'unit_test'"|"'unit_tests'") testsNeeded=true ;;
     "'cov'"|"'coverage'") runCoverage; exit 0 ;;
+    "'clear-logs'"|"'logs'"|"'log'"|"'clear-log'") rm -rf ./.logs/.old/*; exit 0 ;;
     esac
     shift
 done
@@ -384,8 +386,8 @@ if [ -d "./.logs" ]; then
     str=$(date +"%F-%H-%M-%S")
     mkdir -p ./.logs/.old/
     cd ./.logs
-    tar -zcvf ./.old/log-${str}.tar.gz *.txt
-    cd -
+    tar -zcf ./.old/log-${str}.tar.gz *.txt
+    cd - &>/dev/null
 fi
 
 if [ ${cleanNeeded} = true ]; then

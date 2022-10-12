@@ -17,3 +17,4 @@ _*
 cccontrolReminder
 TODO
 compile_commands.json
+.logs/
