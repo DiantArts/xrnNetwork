@@ -92,28 +92,30 @@ endforeach()
 
 file(GLOB_RECURSE XRN_TESTS_SRC ${XRN_BTESTS_DIR}/*.cpp ${XRN_BTESTS_DIR}/*.cxx)
 
-message(${XRN_TESTS_SRC})
+if (XRN_TESTS_SRC)
 
-add_executable(${XRN_BTESTS_BIN} ${XRN_TESTS_SRC})
-target_link_libraries(${XRN_BTESTS_BIN}
-    PRIVATE
-        XRN_${XRN_BIN_NAME}_test_configs
-        ${XRN_BIN_NAME}_project_options
-        ${XRN_BIN_NAME}_project_warnings
-        ${XRN_BIN_NAME}_project_dependencies
-        Catch2::Catch2
-        ${XRN_LIBRARIES_DEPENDENCIES}
-)
+    add_executable(${XRN_BTESTS_BIN} ${XRN_TESTS_SRC})
+    target_link_libraries(${XRN_BTESTS_BIN}
+        PRIVATE
+            XRN_${XRN_BIN_NAME}_test_configs
+            ${XRN_BIN_NAME}_project_options
+            ${XRN_BIN_NAME}_project_warnings
+            ${XRN_BIN_NAME}_project_dependencies
+            Catch2::Catch2
+            ${XRN_LIBRARIES_DEPENDENCIES}
+    )
 
-# automatically discover tests that are defined in catch based test files you can modify the tests.
-catch_discover_tests(
-    ${XRN_BTESTS_BIN}
-    TEST_PREFIX "tests :: "
-    REPORTER xml
-    OUTPUT_DIR .
-    OUTPUT_PREFIX "tests :: "
-    OUTPUT_SUFFIX .xml
-)
+    # automatically discover tests that are defined in catch based test files you can modify the tests.
+    catch_discover_tests(
+        ${XRN_BTESTS_BIN}
+        TEST_PREFIX "tests :: "
+        REPORTER xml
+        OUTPUT_DIR .
+        OUTPUT_PREFIX "tests :: "
+        OUTPUT_SUFFIX .xml
+    )
+
+endif ()
 
 
 
@@ -123,49 +125,53 @@ catch_discover_tests(
 
 file(GLOB_RECURSE XRN_CTESTS_SRC ${XRN_CTESTS_DIR}/*.cpp ${XRN_CTESTS_DIR}/*.cxx)
 
-# normal constexpr
-add_executable(${XRN_CTESTS_BIN} ${XRN_CTESTS_SRC})
-target_link_libraries(${XRN_CTESTS_BIN}
-    PRIVATE
-        XRN_${XRN_BIN_NAME}_test_configs
-        ${XRN_BIN_NAME}_project_options
-        ${XRN_BIN_NAME}_project_warnings
-        ${XRN_BIN_NAME}_project_dependencies
-        Catch2::Catch2
-        ${XRN_LIBRARIES_DEPENDENCIES}
-)
+if (XRN_CTESTS_SRC)
 
-catch_discover_tests(
-    ${XRN_CTESTS_BIN}
-    TEST_PREFIX "constrexprTests :: "
-    REPORTER xml
-    OUTPUT_DIR .
-    OUTPUT_PREFIX "constrexprTests :: "
-    OUTPUT_SUFFIX .xml
-)
+    # normal constexpr
+    add_executable(${XRN_CTESTS_BIN} ${XRN_CTESTS_SRC})
+    target_link_libraries(${XRN_CTESTS_BIN}
+        PRIVATE
+            XRN_${XRN_BIN_NAME}_test_configs
+            ${XRN_BIN_NAME}_project_options
+            ${XRN_BIN_NAME}_project_warnings
+            ${XRN_BIN_NAME}_project_dependencies
+            Catch2::Catch2
+            ${XRN_LIBRARIES_DEPENDENCIES}
+    )
 
-# relaxed constexpr: Disable the constexpr portion of the test, and build again this allows us to have an
-# executable that we can debug when things go wrong with the constexpr testing
-add_executable(${XRN_RCTESTS_BIN} ${XRN_CTESTS_SRC})
-target_link_libraries(${XRN_RCTESTS_BIN}
-    PRIVATE
-        XRN_${XRN_BIN_NAME}_test_configs
-        ${XRN_BIN_NAME}_project_options
-        ${XRN_BIN_NAME}_project_warnings
-        ${XRN_BIN_NAME}_project_dependencies
-        Catch2::Catch2
-        ${XRN_LIBRARIES_DEPENDENCIES}
-)
+    catch_discover_tests(
+        ${XRN_CTESTS_BIN}
+        TEST_PREFIX "constrexprTests :: "
+        REPORTER xml
+        OUTPUT_DIR .
+        OUTPUT_PREFIX "constrexprTests :: "
+        OUTPUT_SUFFIX .xml
+    )
 
-target_compile_definitions(${XRN_RCTESTS_BIN} PRIVATE -DCATCH_CONFIG_RUNTIME_STATIC_REQUIRE)
-catch_discover_tests(
-    ${XRN_RCTESTS_BIN}
-    TEST_PREFIX "relaxedConstrexprTests :: "
-    REPORTER xml
-    OUTPUT_DIR .
-    OUTPUT_PREFIX "relaxedConstrexprTests :: "
-    OUTPUT_SUFFIX .xml
-)
+    # relaxed constexpr: Disable the constexpr portion of the test, and build again this allows us to have an
+    # executable that we can debug when things go wrong with the constexpr testing
+    add_executable(${XRN_RCTESTS_BIN} ${XRN_CTESTS_SRC})
+    target_link_libraries(${XRN_RCTESTS_BIN}
+        PRIVATE
+            XRN_${XRN_BIN_NAME}_test_configs
+            ${XRN_BIN_NAME}_project_options
+            ${XRN_BIN_NAME}_project_warnings
+            ${XRN_BIN_NAME}_project_dependencies
+            Catch2::Catch2
+            ${XRN_LIBRARIES_DEPENDENCIES}
+    )
+
+    target_compile_definitions(${XRN_RCTESTS_BIN} PRIVATE -DCATCH_CONFIG_RUNTIME_STATIC_REQUIRE)
+    catch_discover_tests(
+        ${XRN_RCTESTS_BIN}
+        TEST_PREFIX "relaxedConstrexprTests :: "
+        REPORTER xml
+        OUTPUT_DIR .
+        OUTPUT_PREFIX "relaxedConstrexprTests :: "
+        OUTPUT_SUFFIX .xml
+    )
+
+endif ()
 
 
 

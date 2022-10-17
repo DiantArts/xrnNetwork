@@ -3,7 +3,7 @@
 
 #include <xrn/Network/Message.hpp>
 
-TEST_CASE("Message::basicTest01")
+TEST_CASE(" xrnNetwork :: Message::basicTest01")
 {
     enum MessageType { start, stop, last };
     ::xrn::network::Message<MessageType> m{ MessageType::start, "hello", "you"s, "are"sv };
@@ -25,7 +25,7 @@ TEST_CASE("Message::basicTest01")
     REQUIRE(s2 == 9);
 }
 
-TEST_CASE("Message::basicTest02")
+TEST_CASE(" xrnNetwork :: Message::basicTest02")
 {
     enum MessageType { start, stop, last };
     ::xrn::network::Message<MessageType> m{ MessageType::start, "hello", "you"s, "are"sv, 5, 3.7f };
@@ -42,7 +42,7 @@ TEST_CASE("Message::basicTest02")
     REQUIRE(f1 == 3.7f);
 }
 
-TEST_CASE("Message::basicTest03")
+TEST_CASE(" xrnNetwork :: Message::basicTest03")
 {
     enum MessageType { start, stop, last };
     ::xrn::network::Message<MessageType> m{ MessageType::start };
