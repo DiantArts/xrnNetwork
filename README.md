@@ -1,2 +1,2 @@
-# xrnMeta
-[![Continous Integration](https://github.com/DiantArts/xrnMeta/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/DiantArts/xrnMeta/actions/workflows/continuous-integration.yml)
+# xrnNetwork
+[![Continous Integration](https://github.com/DiantArts/xrnNetwork/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/DiantArts/xrnNetwork/actions/workflows/continuous-integration.yml)
