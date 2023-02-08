@@ -34,7 +34,7 @@ namespace xrn::network {
 ///
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > class Message {
 
 public:

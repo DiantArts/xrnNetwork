@@ -13,7 +13,7 @@
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::hasValueLast UserEnum
-> ::xrn::network::AClient<UserEnum>::AClient()
+> ::xrn::network::client::Client<UserEnum>::Client()
     : m_connection{ nullptr }
 {}
 
@@ -29,22 +29,52 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::hasValueLast UserEnum
-> ::xrn::network::AClient<UserEnum>::~AClient() = default;
+> ::xrn::network::client::Client<UserEnum>::~Client() = default;
 
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::hasValueLast UserEnum
-> ::xrn::network::AClient<UserEnum>::AClient(
-    AClient&& that
+> ::xrn::network::client::Client<UserEnum>::Client(
+    Client&& that
 ) noexcept = default;
 
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::hasValueLast UserEnum
-> auto ::xrn::network::AClient<UserEnum>::operator=(
-    AClient&& that
+> auto ::xrn::network::client::Client<UserEnum>::operator=(
+    Client&& that
 ) noexcept
-    -> AClient& = default;
+    -> Client& = default;
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Incomming messages
+//
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
+/// \brief Handle if the message is a system message
+///
+/// \param message Message to handle
+/// \param connection Connection that sent the message
+///
+/// \return True if the message was handled, false otherwise
+///
+/// \see ::xrn::network::Message, ::xrn::network::Connection
+///
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::hasValueLast UserEnum
+> auto ::xrn::network::client::Client<UserEnum>::handleIncommingSystemMessages(
+    ::xrn::network::Message<UserEnum>& message
+    , ::std::shared_ptr<::xrn::network::Connection<UserEnum>> connection
+) -> bool
+{
+    return false;
+}
 
 
 
@@ -58,7 +88,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::hasValueLast UserEnum
-> auto ::xrn::network::AClient<UserEnum>::onConnect(
+> auto ::xrn::network::client::Client<UserEnum>::onConnect(
     ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
 ) -> bool
 {
@@ -69,7 +99,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::hasValueLast UserEnum
-> void ::xrn::network::AClient<UserEnum>::onDisconnect(
+> void ::xrn::network::client::Client<UserEnum>::onDisconnect(
     ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
 )
 {
@@ -79,7 +109,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::hasValueLast UserEnum
-> auto ::xrn::network::AClient<UserEnum>::onSend(
+> auto ::xrn::network::client::Client<UserEnum>::onSend(
     ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
     , ::xrn::network::Message<UserEnum>& message
 ) -> bool
@@ -93,7 +123,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::hasValueLast UserEnum
-> void ::xrn::network::AClient<UserEnum>::onReceive(
+> void ::xrn::network::client::Client<UserEnum>::onReceive(
     ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
     , ::xrn::network::Message<UserEnum>& message
 )

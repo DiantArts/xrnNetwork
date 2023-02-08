@@ -6,7 +6,7 @@
 ///////////////////////////////////////////////////////////////////////////
 // Headers
 ///////////////////////////////////////////////////////////////////////////
-#include <xrn/Client/Client.hpp>
+#include <xrn/Network/Client/Client.hpp>
 
 ///////////////////////////////////////////////////////////////////////////
 auto main(
@@ -17,7 +17,7 @@ auto main(
     enum MessageType { start, stop, last };
 
     XRN_FATAL_ASSERT(argc == 3, "Usage: client <host> {}", argc);
-    ::xrn::network::AClient<MessageType> client;
+    ::xrn::network::client::Client<MessageType> client;
 
     // ::ClientExample client;
     // XRN_FATAL_ASSERT(

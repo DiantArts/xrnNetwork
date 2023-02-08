@@ -9,7 +9,7 @@
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > ::xrn::network::Message<T>::Message(
     Message::SystemType messageType
 ) noexcept
@@ -21,7 +21,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > ::xrn::network::Message<T>::Message(
     Message::UserType messageType
 ) noexcept
@@ -33,7 +33,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > ::xrn::network::Message<T>::Message(
     Message::SystemType messageType
     , auto&&... args
@@ -49,7 +49,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > ::xrn::network::Message<T>::Message(
     Message::UserType messageType
     , auto&&... args
@@ -74,20 +74,20 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > ::xrn::network::Message<T>::~Message()
 {}
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > ::xrn::network::Message<T>::Message(
     Message&& that
 ) noexcept = default;
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > auto ::xrn::network::Message<T>::operator=(
     Message&& that
 ) noexcept
@@ -104,7 +104,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > void ::xrn::network::Message<T>::push(
     auto&&... args
 )
@@ -117,7 +117,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > void ::xrn::network::Message<T>::push(
     ::xrn::meta::constraint::isContiguousContainer auto&&... args
 )
@@ -139,7 +139,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > template <
     typename RawDataType
 > auto ::xrn::network::Message<T>::pull()
@@ -153,7 +153,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > template <
     ::xrn::meta::constraint::isPointer RawDataType
 > requires (
@@ -171,7 +171,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > template <
     ::xrn::meta::constraint::isMemoryStr RawDataType
 > auto ::xrn::network::Message<T>::pull()
@@ -195,7 +195,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > void ::xrn::network::Message<T>::updateBodySize()
 {
     m_body.resize(m_header.bodySize);
@@ -203,7 +203,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > void ::xrn::network::Message<T>::resize(
     ::std::size_t newSize
 )
@@ -223,7 +223,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > auto ::xrn::network::Message<T>::getBodyAddr()
     -> void*
 {
@@ -232,7 +232,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > auto ::xrn::network::Message<T>::getHeader() const
     -> const Message<T>::Header&
 {
@@ -241,7 +241,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > auto ::xrn::network::Message<T>::getHeader()
     -> Message<T>::Header&
 {
@@ -250,7 +250,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > auto ::xrn::network::Message<T>::getBody() const
     -> const ::std::vector<::std::byte>&
 {
@@ -259,7 +259,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > auto ::xrn::network::Message<T>::getBody()
     -> ::std::vector<::std::byte>&
 {
@@ -268,7 +268,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > auto ::xrn::network::Message<T>::getAsString() const
     -> ::std::string
 {
@@ -287,7 +287,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > constexpr auto ::xrn::network::Message<T>::getSize(
     auto&& arg
 ) -> ::std::size_t
@@ -297,7 +297,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > constexpr auto ::xrn::network::Message<T>::getSize(
     const char *const arg
 ) -> ::std::size_t
@@ -307,7 +307,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > constexpr auto ::xrn::network::Message<T>::getSize(
     ::xrn::meta::constraint::isContiguousContainer auto&& arg
 ) -> ::std::size_t
@@ -326,7 +326,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > void ::xrn::network::Message<T>::pushMemory(
     ::std::size_t index
     , auto&& arg
@@ -342,7 +342,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > void ::xrn::network::Message<T>::pushSingleMemory(
     ::std::size_t index
     , auto& arg
@@ -353,7 +353,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > void ::xrn::network::Message<T>::pushSingleMemory(
     ::std::size_t index
     , auto&& arg
@@ -364,7 +364,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > void ::xrn::network::Message<T>::pushSingleMemory(
     ::std::size_t index
     , const char *const arg
@@ -377,7 +377,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > void ::xrn::network::Message<T>::pushSingleMemory(
     ::std::size_t index
     , char *const arg
@@ -390,7 +390,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > void ::xrn::network::Message<T>::pushSingleMemory(
     ::std::size_t index
     , ::xrn::meta::constraint::isContiguousContainer auto& arg
@@ -403,7 +403,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast T
+    ::xrn::network::detail::constraint::isValidEnum T
 > void ::xrn::network::Message<T>::pushSingleMemory(
     ::std::size_t index
     , ::xrn::meta::constraint::isContiguousContainer auto&& arg

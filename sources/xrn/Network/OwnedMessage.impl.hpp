@@ -9,7 +9,7 @@
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast UserEnum
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
 > ::xrn::network::OwnedMessage<UserEnum>::OwnedMessage(
     ::std::shared_ptr<::xrn::network::Connection<UserEnum>> owner
     , auto&&... args

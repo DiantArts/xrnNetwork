@@ -10,7 +10,7 @@
 // Forward declarations
 ///////////////////////////////////////////////////////////////////////////
 namespace xrn::network {
-    template <::xrn::network::detail::constraint::hasValueLast UserEnum> class Connection;
+    template <::xrn::network::detail::constraint::isValidEnum UserEnum> class Connection;
 }
 
 namespace xrn::network {
@@ -41,7 +41,7 @@ namespace xrn::network {
 ///
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast UserEnum
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
 > class OwnedMessage
     : public ::xrn::network::Message<UserEnum>
 {
