@@ -35,8 +35,8 @@ template <
 template <
     ::xrn::network::detail::constraint::hasValueLast T
 > ::xrn::network::Message<T>::Message(
-    Message::SystemType messageType,
-    auto&&... args
+    Message::SystemType messageType
+    , auto&&... args
 ) noexcept
     : m_header{
         .messageType = static_cast<decltype(Message::Header::messageType)>(messageType),
@@ -51,8 +51,8 @@ template <
 template <
     ::xrn::network::detail::constraint::hasValueLast T
 > ::xrn::network::Message<T>::Message(
-    Message::UserType messageType,
-    auto&&... args
+    Message::UserType messageType
+    , auto&&... args
 ) noexcept
     : m_header{
         .messageType = static_cast<decltype(Message::Header::messageType)>(messageType),
@@ -162,11 +162,9 @@ template <
     -> ::std::span<::std::remove_cvref_t<::std::remove_pointer_t<RawDataType>>>
 {
     using DataType = ::std::remove_cvref_t<::std::remove_pointer_t<RawDataType>>;
-    DataType* ptr;
-    Message::SizeType size;
-    size = *::std::bit_cast<Message::SizeType*>(&m_body[m_index]);
+    Message::SizeType size{ *::std::bit_cast<Message::SizeType*>(&m_body[m_index]) };
     m_index += sizeof(size);
-    ptr = ::std::bit_cast<DataType*>(&m_body[m_index]);
+    DataType* ptr{ ::std::bit_cast<DataType*>(&m_body[m_index]) };
     m_index += sizeof(DataType) * size;
     return { ptr, static_cast<::std::size_t>(size) };
 }
@@ -179,11 +177,9 @@ template <
 > auto ::xrn::network::Message<T>::pull()
     -> ::std::string
 {
-    char* ptr;
-    Message::SizeType size;
-    size = *::std::bit_cast<Message::SizeType*>(&m_body[m_index]);
+    Message::SizeType size{ *::std::bit_cast<Message::SizeType*>(&m_body[m_index]) };
     m_index += sizeof(size);
-    ptr = ::std::bit_cast<char*>(&m_body[m_index]);
+    char* ptr{ ::std::bit_cast<char*>(&m_body[m_index]) };
     m_index += sizeof(char) * size;
     return ::std::string{ ptr, static_cast<::std::size_t>(size) };
 }
@@ -192,7 +188,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// get
+// Size
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -200,8 +196,54 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::hasValueLast T
+> void ::xrn::network::Message<T>::updateBodySize()
+{
+    m_body.resize(m_header.bodySize);
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::hasValueLast T
+> void ::xrn::network::Message<T>::resize(
+    ::std::size_t newSize
+)
+{
+    m_body.resize(newSize);
+    m_header.bodySize = newSize;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Getters
+//
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::hasValueLast T
+> auto ::xrn::network::Message<T>::getBodyAddr()
+    -> void*
+{
+    return m_body.data();
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::hasValueLast T
 > auto ::xrn::network::Message<T>::getHeader() const
-    -> const Message::Header&
+    -> const Message<T>::Header&
+{
+    return m_header;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::hasValueLast T
+> auto ::xrn::network::Message<T>::getHeader()
+    -> Message<T>::Header&
 {
     return m_header;
 }
@@ -211,6 +253,15 @@ template <
     ::xrn::network::detail::constraint::hasValueLast T
 > auto ::xrn::network::Message<T>::getBody() const
     -> const ::std::vector<::std::byte>&
+{
+    return m_body;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::hasValueLast T
+> auto ::xrn::network::Message<T>::getBody()
+    -> ::std::vector<::std::byte>&
 {
     return m_body;
 }
@@ -267,9 +318,9 @@ template <
 template <
     ::xrn::network::detail::constraint::hasValueLast T
 > void ::xrn::network::Message<T>::pushMemory(
-    ::std::size_t index,
-    auto&& arg,
-    auto&&... args
+    ::std::size_t index
+    , auto&& arg
+    , auto&&... args
 )
 {
     const auto size{ Message::getSize(arg) };
@@ -283,8 +334,8 @@ template <
 template <
     ::xrn::network::detail::constraint::hasValueLast T
 > void ::xrn::network::Message<T>::pushSingleMemory(
-    ::std::size_t index,
-    auto& arg
+    ::std::size_t index
+    , auto& arg
 )
 {
     ::std::memcpy(m_body.data() + index, &arg, sizeof(arg));
@@ -294,8 +345,8 @@ template <
 template <
     ::xrn::network::detail::constraint::hasValueLast T
 > void ::xrn::network::Message<T>::pushSingleMemory(
-    ::std::size_t index,
-    auto&& arg
+    ::std::size_t index
+    , auto&& arg
 )
 {
     ::std::memmove(m_body.data() + index, &arg, sizeof(arg));
@@ -305,8 +356,8 @@ template <
 template <
     ::xrn::network::detail::constraint::hasValueLast T
 > void ::xrn::network::Message<T>::pushSingleMemory(
-    ::std::size_t index,
-    const char *const arg
+    ::std::size_t index
+    , const char *const arg
 )
 {
     auto size{ static_cast<Message::SizeType>(::std::strlen(arg)) };
@@ -318,8 +369,8 @@ template <
 template <
     ::xrn::network::detail::constraint::hasValueLast T
 > void ::xrn::network::Message<T>::pushSingleMemory(
-    ::std::size_t index,
-    char *const arg
+    ::std::size_t index
+    , char *const arg
 )
 {
     auto size{ static_cast<Message::SizeType>(::std::strlen(arg)) };
@@ -331,8 +382,8 @@ template <
 template <
     ::xrn::network::detail::constraint::hasValueLast T
 > void ::xrn::network::Message<T>::pushSingleMemory(
-    ::std::size_t index,
-    ::xrn::meta::constraint::isContiguousContainer auto& arg
+    ::std::size_t index
+    , ::xrn::meta::constraint::isContiguousContainer auto& arg
 )
 {
     auto size{ static_cast<Message::SizeType>(arg.size()) };
@@ -344,8 +395,8 @@ template <
 template <
     ::xrn::network::detail::constraint::hasValueLast T
 > void ::xrn::network::Message<T>::pushSingleMemory(
-    ::std::size_t index,
-    ::xrn::meta::constraint::isContiguousContainer auto&& arg
+    ::std::size_t index
+    , ::xrn::meta::constraint::isContiguousContainer auto&& arg
 )
 {
     auto size{ static_cast<Message::SizeType>(arg.size()) };

@@ -9,11 +9,11 @@ project(CMakeSandbox LANGUAGES CXX)
 set(XRN_CXX_VERSION 23)
 
 # dependencies
-set(XRN_PERSONAL_DEPENDENCIES xrnLog xrnMeta) # include other xrn projects
-set(XRN_LIBRARIES_REQUIRED spdlog/1.10.0)
-set(XRN_LIBRARIES_REQUIREMENTS spdlog fmt) # find_package
-set(XRN_LIBRARIES_DEPENDENCIES CONAN_PKG::spdlog CONAN_PKG::fmt) # target_link_libraries
-set(XRN_LIBRARIES_HEADERS spdlog fmt) # include_directories()
+set(XRN_PERSONAL_DEPENDENCIES xrnLog xrnMeta xrnUtil) # include other xrn projects
+set(XRN_LIBRARIES_REQUIRED spdlog/1.10.0 asio/1.24.0)
+set(XRN_LIBRARIES_REQUIREMENTS spdlog fmt asio) # find_package
+set(XRN_LIBRARIES_DEPENDENCIES CONAN_PKG::spdlog CONAN_PKG::fmt CONAN_PKG::asio) # target_link_libraries
+set(XRN_LIBRARIES_HEADERS spdlog fmt asio) # include_directories()
 
 set(SPDLOG_BUILD_SHARED OFF)
 set(SPDLOG_FMT_EXTERNAL ON)
@@ -24,12 +24,15 @@ set(SPDLOG_BUILD_TESTS OFF)
 set(XRN_TOOLCHAIN_DIR "${CMAKE_SOURCE_DIR}/.toolchain")
 set(XRN_TOOLCHAIN_DETAILS_DIR "${XRN_TOOLCHAIN_DIR}/.details")
 set(XRN_SOURCES_DIR "sources")
+set(XRN_EXTERNALS_DIR "externals")
 set(XRN_TESTS_DIR "tests")
 set(XRN_OUTPUT_DIR "binaries")
 
 set(XRN_SHADERS_DIR "shaders")
 set(XRN_FRAGMENTS_DIR "Fragment")
 set(XRN_VERTEXES_DIR "Vertex")
+
+option(COMPILE_SERVER "Compile the server instead of the client" OFF)
 
 # testing
 option(ENABLE_TESTING "Enable testing" OFF)
