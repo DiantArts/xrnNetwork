@@ -1,6 +1,6 @@
 #pragma once
 
-#include <xrn/Network/IClient.hpp>
+#include <xrn/Network/AClient.hpp>
 
 namespace xrn::network {
 
@@ -8,9 +8,9 @@ namespace xrn::network {
 /// \brief Interface detailing basic clients' features
 /// \ingroup network
 ///
-/// \include AClient.hpp <xrn/Network/Client/AClient.hpp>
+/// \include Client.hpp <xrn/Network/Client/Client.hpp>
 ///
-/// ::xrn::network::AClient's purpuse is simplify data share by providing a
+/// ::xrn::network::Client's purpuse is simplify data share by providing a
 /// simple way to regroup and act onto multiple data into a single object.
 /// The client is designed as Event programming and the user must implement
 /// the on... methods to interact with it
@@ -20,8 +20,8 @@ namespace xrn::network {
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::hasValueLast UserEnum
-> class AClient
-    : public ::xrn::network::IClient<UserEnum>
+> class Client
+    : public ::xrn::network::AClient<UserEnum>
 {
 
 public:
@@ -37,7 +37,7 @@ public:
     /// \brief Constructor
     ///
     ///////////////////////////////////////////////////////////////////////////
-    explicit AClient();
+    explicit Client();
 
 
 
@@ -54,14 +54,14 @@ public:
     /// Clears the registry opon destruction.
     ///
     ///////////////////////////////////////////////////////////////////////////
-    virtual ~AClient();
+    virtual ~Client();
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Copy constructor
     ///
     ///////////////////////////////////////////////////////////////////////////
-    AClient(
-        const AClient& other
+    Client(
+        const Client& other
     ) noexcept = delete;
 
     ///////////////////////////////////////////////////////////////////////////
@@ -69,16 +69,16 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     auto operator=(
-        const AClient& other
+        const Client& other
     ) noexcept
-        -> AClient& = delete;
+        -> Client& = delete;
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Move constructor
     ///
     ///////////////////////////////////////////////////////////////////////////
-    AClient(
-        AClient&& that
+    Client(
+        Client&& that
     ) noexcept;
 
     ///////////////////////////////////////////////////////////////////////////
@@ -86,125 +86,88 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     auto operator=(
-        AClient&& that
+        Client&& that
     ) noexcept
-        -> AClient&;
+        -> Client&;
 
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////
-    // Thread
+    // Events
     //
     ///////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
-    /// \brief Force stop the thread containing asio context
+    /// \brief Event triggered when a connection with a client is established
+    ///
+    /// Event called just before after a connection with another client is
+    /// successfully established, secured and ready to be used
+    ///
+    /// \param target Client with who the connection has been established
+    ///
+    /// \return False to prevent the message to be sent, True otherwise
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void stopThread();
+    [[ nodiscard ]] virtual auto onConnect(
+        ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
+    ) -> bool override;
 
     ///////////////////////////////////////////////////////////////////////////
-    /// \brief Join the thread containing asio context
+    /// \brief Event triggered when disconnected from a client
+    ///
+    /// Event called just before after the client is disconnected. This
+    /// event is called, whether the connection has been cut or it has been
+    /// lost for any other reason
+    ///
+    /// \param target Client with who the connection has been stopped
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void joinThread();
-
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    // Incomming messages
-    //
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-
+    virtual void onDisconnect(
+        ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
+    ) override;
 
     ///////////////////////////////////////////////////////////////////////////
-    /// \brief Pull a single incomming message
+    /// \brief Event triggered when a message is about to be sent
     ///
-    /// Calls handleIncommingSystemMessage() method to clear out system
-    /// messages, then call onReceive() is the message was not handled
+    /// Event called just before a message is sent to a client. This event can
+    /// prevent the message to be sent or modify its content
     ///
-    /// \handleIncommingSystemMessage(), onReceive()
+    /// \param target Client targeted by the message
+    /// \param message Mutable message sent to the target
+    ///
+    /// \return False to prevent the message to be sent, True otherwise
+    ///
+    /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void pullIncommingMessage();
+    [[ nodiscard ]] virtual auto onSend(
+        ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
+        , ::xrn::network::Message<UserEnum>& message
+    ) -> bool override;
 
     ///////////////////////////////////////////////////////////////////////////
-    /// \brief Pull all incomming messages
+    /// \brief Event triggered when a message is received
     ///
-    /// \see pullIncommingMessage
+    /// Event called just after receiving a message from a client.
     ///
-    ///////////////////////////////////////////////////////////////////////////
-    void pullIncommingMessages();
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Wait for messages to arrive, then call pullIncommingMessages()
+    /// \param target Client that sent the message
+    /// \param message Mutable message sent by the target
     ///
-    /// \see pullIncommingMessage
+    /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void blockingPullIncommingMessages();
-
-    // returns true meaning the message is already handled
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Handle if the message is a system message
-    ///
-    /// \param message Message to handle
-    /// \param connection Connection that sent the message
-    ///
-    /// \return True if the message was handled, false otherwise
-    ///
-    /// \see ::xrn::network::Message, ::xrn::network::Connection
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    virtual auto handleIncommingSystemMessages(
-        ::xrn::network::Message<UserMessageType>& message
-        , ::std::shared_ptr<::xrn::network::Connection<UserMessageType>> connection
-    ) -> bool = 0;
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Notify the inccomming message queue that an event occured
-    ///
-    /// The event is most likely that a new message arrived (can be that
-    /// the client disconnects and more).
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    void notifyIncommingMessageQueue();
-
+    virtual void onReceive(
+        ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
+        , ::xrn::network::Message<UserEnum>& message
+    ) override;
 
 
 
 private:
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    // Members
-    //
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////
-    /// \brief Asio context running on m_threadContext
-    ///
-    ////////////////////////////////////////////////////////////
-    ::asio::io_context m_asioContext;
-
-    ////////////////////////////////////////////////////////////
-    /// \brief Thread containing the asio context
-    ///
-    ////////////////////////////////////////////////////////////
-    ::std::thread m_threadContext;
-
-
-
-    ////////////////////////////////////////////////////////////
-    /// \brief Queue of all the messages received
-    ///
-    ////////////////////////////////////////////////////////////
-    ::xrn::network::detail::Queue<::xrn::network::OwnedMessage<UserEnum>>& m_messagesIn;
+    ::std::shared_ptr<::xrn::network::Connection<UserEnum>> m_connection;
 
 };
 
@@ -213,4 +176,4 @@ private:
 ///////////////////////////////////////////////////////////////////////////
 // Implementation Headers
 ///////////////////////////////////////////////////////////////////////////
-#include <xrn/Network/AClient.impl.hpp>
+#include <xrn/Network/Client.impl.hpp>

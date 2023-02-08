@@ -74,9 +74,9 @@ template <
         , [&](const ::std::error_code& errCode) {
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_ERROR("Connection {}: Operation canceled", m_id);
+                    XRN_ERROR("C{}: Operation canceled", m_id);
                 } else {
-                    XRN_ERROR("Connection {}: Failed to target {}:{}", m_id, host, port);
+                    XRN_ERROR("C{}: Failed to target {}:{}", m_id, host, port);
                 }
                 this->disconect();
                 return;
@@ -88,7 +88,7 @@ template <
             }
         }
     );
-    XRN_DEBUG("Connection {}: targeting {}:{}", m_id, host, port);
+    XRN_DEBUG("C{}: targeting {}:{}", m_id, host, port);
 }
 
 ////////////////////////////////////////////////////////////
@@ -100,7 +100,7 @@ template <
         m_isSendAllowed = false;
         m_socket.cancel();
         m_socket.close();
-        XRN_DEBUG("Connection {}: closed", m_id);
+        XRN_DEBUG("C{}: closed", m_id);
     }
 }
 
@@ -210,16 +210,29 @@ template <
 ////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto xrn::network::Connection<UserEnum>::getId() const
+    -> ::xrn::Id
+{
+    return m_id;
+}
+
+////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
 > auto xrn::network::Connection<UserEnum>::getPort() const
     -> ::std::uint16_t
-{}
+{
+    return m_socket.local_endpoint().port();
+}
 
 ////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > auto xrn::network::Connection<UserEnum>::getAddress() const
     -> ::std::string
-{}
+{
+    return m_socket.local_endpoint().address().to_string();
+}
 
 ////////////////////////////////////////////////////////////
 template <
@@ -248,7 +261,7 @@ template <
 {
     if (!m_isSendAllowed) {
         XRN_ERROR(
-            "Connection {}: {}"
+            "C{}: {}"
             , m_id
             , "Messages are already being sent or the connection cannot send messages"
         );
@@ -275,12 +288,12 @@ template <
             // error handling
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_ERROR("Connection {}: Operation canceled", m_id);
+                    XRN_ERROR("C{}: Operation canceled", m_id);
                 } else if (errCode == ::asio::error::eof) {
-                    XRN_ERROR("Connection {}: Connection closed, aborting message sending", m_id);
+                    XRN_ERROR("C{}: Connection closed, aborting message sending", m_id);
                     this->disconnect();
                 } else {
-                    XRN_ERROR("Connection {}: Send header failed: {}", m_id, errCode.message());
+                    XRN_ERROR("C{}: Send header failed: {}", m_id, errCode.message());
                     this->disconnect();
                 }
                 return;
@@ -340,12 +353,12 @@ template <
             // error handling
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_ERROR("Connection {}: Operation canceled", m_id);
+                    XRN_ERROR("C{}: Operation canceled", m_id);
                 } else if (errCode == ::asio::error::eof) {
-                    XRN_ERROR("Connection {}: Connection closed, aborting message sending", m_id);
+                    XRN_ERROR("C{}: Connection closed, aborting message sending", m_id);
                     this->disconnect();
                 } else {
-                    XRN_ERROR("Connection {}: Send header failed: {}", m_id, errCode.message());
+                    XRN_ERROR("C{}: Send header failed: {}", m_id, errCode.message());
                     this->disconnect();
                 }
                 return;
@@ -420,12 +433,12 @@ template <
             // error handling
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_ERROR("Connection {}: Operation canceled", m_id);
+                    XRN_ERROR("C{}: Operation canceled", m_id);
                 } else if (errCode == ::asio::error::eof) {
-                    XRN_ERROR("Connection {}: Connection closed, aborting message sending", m_id);
+                    XRN_ERROR("C{}: Connection closed, aborting message sending", m_id);
                     this->disconnect();
                 } else {
-                    XRN_ERROR("Connection {}: Receive header failed: {}", m_id, errCode.message());
+                    XRN_ERROR("C{}: Receive header failed: {}", m_id, errCode.message());
                     this->disconnect();
                 }
                 return;
@@ -479,12 +492,12 @@ template <
             // error handling
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_ERROR("Connection {}: Operation canceled", m_id);
+                    XRN_ERROR("C{}: Operation canceled", m_id);
                 } else if (errCode == ::asio::error::eof) {
-                    XRN_ERROR("Connection {}: Connection closed, aborting message sending", m_id);
+                    XRN_ERROR("C{}: Connection closed, aborting message sending", m_id);
                     this->disconnect();
                 } else {
-                    XRN_ERROR("Connection {}: Receive header failed: {}", m_id, errCode.message());
+                    XRN_ERROR("C{}: Receive header failed: {}", m_id, errCode.message());
                     this->disconnect();
                 }
                 return;

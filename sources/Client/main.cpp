@@ -6,9 +6,7 @@
 ///////////////////////////////////////////////////////////////////////////
 // Headers
 ///////////////////////////////////////////////////////////////////////////
-#include <xrn/Network/Message.hpp>
-#include <xrn/Network/AClient.hpp>
-#include <xrn/Network/Connection.hpp>
+#include <xrn/Client/Client.hpp>
 
 ///////////////////////////////////////////////////////////////////////////
 auto main(
@@ -16,7 +14,10 @@ auto main(
     , char** argv
 ) -> int
 {
+    enum MessageType { start, stop, last };
+
     XRN_FATAL_ASSERT(argc == 3, "Usage: client <host> {}", argc);
+    ::xrn::network::AClient<MessageType> client;
 
     // ::ClientExample client;
     // XRN_FATAL_ASSERT(

@@ -266,6 +266,16 @@ template <
     return m_body;
 }
 
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::hasValueLast T
+> auto ::xrn::network::Message<T>::getAsString() const
+    -> ::std::string
+{
+    return { ::std::bit_cast<char*>(m_body.data()), m_body.size() };
+
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
