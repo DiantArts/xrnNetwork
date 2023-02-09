@@ -56,6 +56,11 @@ endif ()
 # Configuration definition
 # =========================================================================
 
+get_filename_component(XRN_CLIENT_MAIN ${XRN_SOURCES_DIR}/Client/main.cpp REALPATH)
+get_filename_component(XRN_SERVER_MAIN ${XRN_SOURCES_DIR}/Server/main.cpp REALPATH)
+list(REMOVE_ITEM XRN_SOURCES "${XRN_CLIENT_MAIN}")
+list(REMOVE_ITEM XRN_SOURCES "${XRN_SERVER_MAIN}")
+
 # Define binary
 add_library(XRN_${XRN_BIN_NAME}_test_configs OBJECT main.cpp ${XRN_SOURCES} ${XRN_FRAGMENT} ${XRN_VERTEX} ${XRN_HEADERS})
 

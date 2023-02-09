@@ -29,10 +29,10 @@ template <
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////
-// template <
-    // ::xrn::network::detail::constraint::hasValueLast UserEnum
-// > auto ::xrn::network::OwnedMessage<UserEnum>::getOwner()
-    // -> ::std::shared_ptr<::xrn::network::Connection<UserEnum>
-// {
-    // return m_owner;
-// }
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::OwnedMessage<UserEnum>::getOwner()
+    -> ::std::shared_ptr<::xrn::network::Connection<UserEnum>>
+{
+    return m_owner;
+}

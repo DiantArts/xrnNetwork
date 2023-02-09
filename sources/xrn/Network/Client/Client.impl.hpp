@@ -12,10 +12,14 @@
 ///
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast UserEnum
-> ::xrn::network::client::Client<UserEnum>::Client()
-    : m_connection{ nullptr }
-{}
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> ::xrn::network::client::Client<UserEnum>::Client(
+    const ::std::string& host
+    , ::std::uint16_t port
+)
+{
+    this->connect(host, port);
+}
 
 
 
@@ -28,23 +32,74 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast UserEnum
-> ::xrn::network::client::Client<UserEnum>::~Client() = default;
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> ::xrn::network::client::Client<UserEnum>::~Client()
+{
+    this->disconnect();
+}
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast UserEnum
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
 > ::xrn::network::client::Client<UserEnum>::Client(
     Client&& that
 ) noexcept = default;
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast UserEnum
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
 > auto ::xrn::network::client::Client<UserEnum>::operator=(
     Client&& that
 ) noexcept
     -> Client& = default;
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Connection
+//
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::client::Client<UserEnum>::connect(
+    const ::std::string& host
+    , ::std::uint16_t port
+)
+{
+    m_connection = ::std::make_shared<::xrn::network::Connection<UserEnum>>(
+        host, port, *this
+    );
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::client::Client<UserEnum>::disconnect()
+{
+    m_connection.reset();
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::client::Client<UserEnum>::isConnected() const
+    -> bool
+{
+    return m_connection && m_connection->isConnected();
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::client::Client<UserEnum>::isRunning() const
+    -> bool
+{
+    this->isConnected();
+}
 
 
 
@@ -56,80 +111,67 @@ template <
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////
-/// \brief Handle if the message is a system message
-///
-/// \param message Message to handle
-/// \param connection Connection that sent the message
-///
-/// \return True if the message was handled, false otherwise
-///
-/// \see ::xrn::network::Message, ::xrn::network::Connection
-///
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::client::Client<UserEnum>::send(
+    typename ::xrn::network::Message<UserEnum>::SystemType messageType,
+    auto&&... args
+)
+{
+    m_connection->send(
+        ::xrn::network::Message<UserEnum>{ messageType, ::std::forward<decltype(args)>(args)... }
+    );
+}
+
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast UserEnum
-> auto ::xrn::network::client::Client<UserEnum>::handleIncommingSystemMessages(
-    ::xrn::network::Message<UserEnum>& message
-    , ::std::shared_ptr<::xrn::network::Connection<UserEnum>> connection
-) -> bool
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::client::Client<UserEnum>::send(
+    UserEnum messageType,
+    auto&&... args
+)
 {
-    return false;
+    m_connection->send(
+        ::xrn::network::Message<UserEnum>{ messageType, ::std::forward<decltype(args)>(args)... }
+    );
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::client::Client<UserEnum>::send(
+    const ::xrn::network::Message<UserEnum>& message
+)
+{
+    m_connection->send(message);
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::client::Client<UserEnum>::send(
+    ::xrn::network::Message<UserEnum>&& message
+)
+{
+    m_connection->send(::std::forward<decltype(message)>(message));
 }
 
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// Events
+// Incomming messages
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast UserEnum
-> auto ::xrn::network::client::Client<UserEnum>::onConnect(
-    ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
-) -> bool
-{
-    XRN_LOG("C{}: connected to C{}", m_connection->getId(), target->getId());
-    return true;
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::hasValueLast UserEnum
-> void ::xrn::network::client::Client<UserEnum>::onDisconnect(
-    ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
-)
-{
-    XRN_LOG("C{}: disconnected from C{}", m_connection->getId(), target->getId());
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::hasValueLast UserEnum
-> auto ::xrn::network::client::Client<UserEnum>::onSend(
-    ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::client::Client<UserEnum>::handleIncommingSystemMessages(
+    ::std::shared_ptr<::xrn::network::Connection<UserEnum>> connection
     , ::xrn::network::Message<UserEnum>& message
 ) -> bool
 {
-    XRN_LOG(
-        "C{} -> C{}: '{}'",
-        m_connection->getId(), target->getId(), message.getAsString()
-    );
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::hasValueLast UserEnum
-> void ::xrn::network::client::Client<UserEnum>::onReceive(
-    ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
-    , ::xrn::network::Message<UserEnum>& message
-)
-{
-    XRN_LOG(
-        "C{} <- C{}: '{}'",
-        m_connection->getId(), target->getId(), message.getAsString()
-    );
+    return false;
 }

@@ -8,6 +8,13 @@
 #include <xrn/Network/Message.hpp>
 #include <xrn/Network/OwnedMessage.hpp>
 
+///////////////////////////////////////////////////////////////////////////
+// Forward declarations
+///////////////////////////////////////////////////////////////////////////
+namespace xrn::network {
+    template <::xrn::network::detail::constraint::isValidEnum> class AClient;
+}
+
 namespace xrn::network {
 
 ///////////////////////////////////////////////////////////////////////////
@@ -46,9 +53,9 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     explicit Connection(
-        ::asio::io_context& asioContext
-        , const ::std::string& host
+        const ::std::string& host
         , ::std::uint16_t port
+        , ::xrn::network::AClient<UserEnum>& owner
     );
 
     ///////////////////////////////////////////////////////////////////////////
@@ -140,7 +147,7 @@ public:
     /// Cancels every asynchronous actions and close the socket
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void disconect();
+    void disconnect();
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Test the connection's status
@@ -151,7 +158,7 @@ public:
     /// \return True if the connection is still usable, false otherwise
     ///
     ///////////////////////////////////////////////////////////////////////////
-    [[ nodiscard ]] auto isOpen() const
+    [[ nodiscard ]] auto isConnected() const
         -> bool;
 
 
@@ -233,7 +240,7 @@ public:
     ///
     /// Waits for incomming messages. On receive, the buffer of incomming
     /// messages is filled with the incomming message, it calls
-    /// transferBufferToInQueue()
+    /// transferInMessageToOwner()
     ///
     ///////////////////////////////////////////////////////////////////////////
     void startReceivingMessage();
@@ -279,15 +286,6 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     [[ nodiscard ]] auto getAddress() const
         -> ::std::string;
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Get the asio context
-    ///
-    /// \returns I/O context that has been passed at constructor
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    [[ nodiscard ]] auto getAsioContext()
-        -> ::asio::io_context&;
 
 
 
@@ -407,7 +405,7 @@ private:
     /// queue of incomming messages that can later be pulled by the Owner
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void transferBufferToInQueue();
+    void transferInMessageToOwner();
 
 
 
@@ -421,6 +419,12 @@ private:
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
+    /// \brief Owner of the connection
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    ::xrn::network::AClient<UserEnum>& m_owner;
+
+    ///////////////////////////////////////////////////////////////////////////
     /// \brief Asio socket representing the socket
     ///
     ///////////////////////////////////////////////////////////////////////////
@@ -430,7 +434,7 @@ private:
     /// \brief Buffer allowing messages to be received
     ///
     /// This message will be copied to a queue of incomming messages with
-    /// transferBufferToInQueue()
+    /// transferInMessageToOwner()
     ///
     ///////////////////////////////////////////////////////////////////////////
     ::xrn::network::Message<UserEnum> m_bufferIn;
@@ -440,14 +444,6 @@ private:
     ///
     ///////////////////////////////////////////////////////////////////////////
     ::xrn::network::detail::Queue<::xrn::network::Message<UserEnum>> m_messagesOut;
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Queue of all the messages received
-    ///
-    /// reference (owned by the owner of the connection)
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    ::xrn::network::detail::Queue<::xrn::network::OwnedMessage<UserEnum>>& m_messagesIn;
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Create a unique identificating number for every connection

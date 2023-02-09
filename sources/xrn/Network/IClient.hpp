@@ -20,7 +20,7 @@ namespace xrn::network {
 ///
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::hasValueLast UserEnum
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
 > class IClient {
 
 public:
@@ -102,7 +102,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     [[ nodiscard ]] virtual auto onConnect(
         ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
-    ) -> bool = 0;
+    ) -> bool;
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Event triggered when disconnected from a client
@@ -116,7 +116,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     virtual void onDisconnect(
         ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
-    ) = 0;
+    );
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Event triggered when a message is about to be sent
@@ -133,9 +133,9 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     [[ nodiscard ]] virtual auto onSend(
-        ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
-        , ::xrn::network::Message<UserEnum>& message
-    ) -> bool = 0;
+        ::xrn::network::Message<UserEnum>& message
+        , ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
+    ) -> bool;
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Event triggered when a message is received
@@ -149,9 +149,9 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     virtual void onReceive(
-        ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
-        , ::xrn::network::Message<UserEnum>& message
-    ) = 0;
+        ::xrn::network::Message<UserEnum>& message
+        , ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
+    );
 
 
 

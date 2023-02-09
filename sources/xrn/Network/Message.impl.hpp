@@ -10,6 +10,11 @@
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum T
+> ::xrn::network::Message<T>::Message() noexcept = default;
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
 > ::xrn::network::Message<T>::Message(
     Message::SystemType messageType
 ) noexcept
@@ -126,6 +131,16 @@ template <
     const auto oldSize{ m_body.size() };
     m_body.resize(oldSize + size);
     pushMemory(oldSize, ::std::forward<decltype(args)>(args)...);
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
+> void ::xrn::network::Message<T>::pushAll(
+    auto&&... args
+)
+{
+    (this->push(::std::forward<decltype(args)>(args)), ...);
 }
 
 
@@ -251,6 +266,15 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum T
+> auto ::xrn::network::Message<T>::getHeaderAddr()
+    -> void*
+{
+    return &m_header;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
 > auto ::xrn::network::Message<T>::getBody() const
     -> const ::std::vector<::std::byte>&
 {
@@ -273,7 +297,48 @@ template <
     -> ::std::string
 {
     return { ::std::bit_cast<char*>(m_body.data()), m_body.size() };
+}
 
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
+> auto ::xrn::network::Message<T>::getHeaderSize() const
+    -> ::std::size_t
+{
+    return sizeof(Message::Header);
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
+> auto ::xrn::network::Message<T>::getBodySize() const
+    -> ::std::size_t
+{
+    return m_header.bodySize;
+}
+
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
+> auto ::xrn::network::Message<T>::getType() const
+    -> T
+{
+    return static_cast<T>(m_header.messageType);
+}
+
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
+> auto ::xrn::network::Message<T>::getTypeAsSystemType() const
+    -> Message<T>::SystemType
+{
+    return static_cast<Message::SystemType>(m_header.messageType);
+}
+
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
+> auto ::xrn::network::Message<T>::getTypeAsInt() const
+    -> ::std::uint16_t
+{
+    return m_header.packetType;
 }
 
 

@@ -79,3 +79,43 @@ TEST_CASE(" xrnNetwork :: Message::basicTest03")
     REQUIRE(str9 == "please");
     REQUIRE(str10 == "HELLOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
 }
+
+TEST_CASE(" xrnNetwork :: Message::basicTest04")
+{
+    enum MessageType { start, stop, last };
+    ::xrn::network::Message<MessageType> m{
+        MessageType::start
+        , "hello"
+        , "can"
+        , "someone"
+        , "hear"
+        , "me"
+        , "I"
+        , "need"
+        , "help"
+        , "please"
+        , "HELLOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
+    };
+
+    auto str1{ m.pull<char*>() };
+    auto str2{ m.pull<::std::string>() };
+    auto str3{ m.pull<::std::vector<char>>() };
+    auto str4{ m.pull<::std::span<char>>() };
+    auto str5{ m.pull<char*>() };
+    auto str6{ m.pull<char*>() };
+    auto str7{ m.pull<char*>() };
+    auto str8{ m.pull<char*>() };
+    auto str9{ m.pull<char*>() };
+    auto str10{ m.pull<char*>() };
+
+    REQUIRE(str1 == "hello");
+    REQUIRE(str2 == "can");
+    REQUIRE(str3 == "someone");
+    REQUIRE(str4 == "hear");
+    REQUIRE(str5 == "me");
+    REQUIRE(str6 == "I");
+    REQUIRE(str7 == "need");
+    REQUIRE(str8 == "help");
+    REQUIRE(str9 == "please");
+    REQUIRE(str10 == "HELLOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+}

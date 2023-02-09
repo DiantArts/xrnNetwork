@@ -6,7 +6,7 @@
 ///////////////////////////////////////////////////////////////////////////
 // Headers
 ///////////////////////////////////////////////////////////////////////////
-#include <xrn/Network/Client/Client.hpp>
+#include <Example/Client.hpp>
 
 ///////////////////////////////////////////////////////////////////////////
 auto main(
@@ -17,46 +17,33 @@ auto main(
     enum MessageType { start, stop, last };
 
     XRN_FATAL_ASSERT(argc == 3, "Usage: client <host> {}", argc);
-    ::xrn::network::client::Client<MessageType> client;
+    ::example::Client client{
+        argv[1],
+        static_cast<::std::uint16_t>(::std::atoi(argv[2]))
+    };
 
-    // ::ClientExample client;
-    // XRN_FATAL_ASSERT(
-        // client.connectToServer(argv[1], ::std::atoi(argv[2]),
-        // "Could not connect the following server: {}:{}", argv[1], ::std::atoi(argv[2])
-    // );
+    client.isRunning();
 
-    // ::std::thread inMessagesThread{
-        // [&client](){
-            // ::std::size_t i{ 0 };
-            // while (client.isConnectedToServer()) {
-                // client.blockingPullIncommingMessages();
-            // }
-        // }
-    // };
+    ::std::string str;
+    while (true) {
+        ::std::getline(::std::cin, str);
+        if (!client.isConnected()) {
+            break;
+        } else if (str.size()) {
+            if (!::std::strncmp(str.c_str(), "/", 1)) {
+                switch (*str.substr(1, 2).c_str()) {
+                case 'h': client.commandHelp(); break;
+                case 'q': goto ExitWhile;
+                default: ::fmt::print("System: {}\n", "invalid command"); break;
+                }
+            } else {
+                client.messageServer(str);
+            }
+        }
+    }
+ExitWhile:
 
-    // ::std::string str;
-    // while (true) {
-        // ::std::getline(::std::cin, str);
-        // if (!client.isConnected()) {
-            // break;
-        // } else if (str.size()) {
-            // if (!::std::strncmp(str.c_str(), "/", 1)) {
-                // switch (*str.substr(1, 2).c_str()) {
-                // case 'h': client.commandHelp(); break;
-                // case 'q': client.disconnect(); goto ExitWhile;
-                // case 'u': client.messageUdpServer(str.substr(3)); break;
-                // case 'n': client.rename(str.substr(3)); break;
-                // case 'c': client.displayConnectedClients(); break;
-                // default: ::std::cerr << "[ERROR:SYSTEM] invalid command.\n";
-                // }
-            // } else {
-                // client.messageTcpServer(str);
-            // }
-        // }
-    // }
-
-    // client.getIncommingMessages().notify();
-    // inMessagesThread.join();
+    client.disconnect();
 
     return EXIT_SUCCESS;
 }

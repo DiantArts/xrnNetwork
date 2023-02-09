@@ -9,11 +9,12 @@
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > ::xrn::network::Connection<UserEnum>::Connection(
-    ::asio::io_context& asioContext
-    , const ::std::string& host
+    const ::std::string& host
     , ::std::uint16_t port
+    , ::xrn::network::AClient<UserEnum>& owner
 )
-    : m_socket{ asioContext }
+    : m_owner{ owner }
+    , m_socket{ m_owner.getAsioContext() }
 {
     m_socket.open(::asio::ip::udp::v4());
     m_socket.bind(::asio::ip::udp::endpoint(::asio::ip::udp::v4(), 0));
@@ -34,7 +35,7 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > ::xrn::network::Connection<UserEnum>::~Connection()
 {
-    this->disconect();
+    this->disconnect();
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -71,30 +72,31 @@ template <
 {
     m_socket.async_connect(
         ::asio::ip::udp::endpoint{ ::asio::ip::address::from_string(host), port }
-        , [&](const ::std::error_code& errCode) {
+        , [=](const ::std::error_code& errCode) {
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
                     XRN_ERROR("C{}: Operation canceled", m_id);
                 } else {
                     XRN_ERROR("C{}: Failed to target {}:{}", m_id, host, port);
                 }
-                this->disconect();
+                this->disconnect();
                 return;
             }
 
+            XRN_LOG("C{}: targeting {}:{}", m_id, host, port);
             m_isSendAllowed = true;
             if (this->hasSendingMessagesAwaiting()) {
                 this->sendAwaitingMessages();
             }
         }
     );
-    XRN_DEBUG("C{}: targeting {}:{}", m_id, host, port);
+    XRN_DEBUG("C{}: request targeting {}:{}", m_id, host, port);
 }
 
 ////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void xrn::network::Connection<UserEnum>::disconect()
+> void xrn::network::Connection<UserEnum>::disconnect()
 {
     if (m_socket.is_open()) {
         m_isSendAllowed = false;
@@ -102,12 +104,13 @@ template <
         m_socket.close();
         XRN_DEBUG("C{}: closed", m_id);
     }
+    m_owner.notifyIncommingMessageQueue();
 }
 
 ////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> auto xrn::network::Connection<UserEnum>::isOpen() const
+> auto xrn::network::Connection<UserEnum>::isConnected() const
     -> bool
 {
     return m_socket.is_open();
@@ -129,7 +132,7 @@ template <
     const ::xrn::network::Message<UserEnum>& message
 )
 {
-    ::asio::post(this->getAsioContext(), ::std::bind_front(
+    ::asio::post(m_owner.getAsioContext(), ::std::bind_front(
         [this](
             ::xrn::network::Message<UserEnum> message
         ) {
@@ -141,6 +144,7 @@ template <
         }
         , message
     ));;
+    XRN_DEBUG("C{}: request send", m_id);
 }
 
 ////////////////////////////////////////////////////////////
@@ -150,7 +154,7 @@ template <
     ::xrn::network::Message<UserEnum>&& message
 )
 {
-    ::asio::post(this->getAsioContext(), ::std::bind_front(
+    ::asio::post(m_owner.getAsioContext(), ::std::bind_front(
         [this](
             ::xrn::network::Message<UserEnum> message
         ) {
@@ -178,7 +182,7 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void xrn::network::Connection<UserEnum>::sendAwaitingMessages()
 {
-    this->sendMessage([this](){});
+    this->sendMessage([this](){ XRN_DEBUG("C{}: message sent", m_id); });
 }
 
 
@@ -195,7 +199,7 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void xrn::network::Connection<UserEnum>::startReceivingMessage()
 {
-    this->receiveMessage([this](){});
+    this->receiveMessage([this](){ XRN_DEBUG("C{}: message sent", m_id); });
 }
 
 
@@ -234,15 +238,6 @@ template <
     return m_socket.local_endpoint().address().to_string();
 }
 
-////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum UserEnum
-> auto xrn::network::Connection<UserEnum>::getAsioContext()
-    -> ::asio::io_context&
-{
-    return *m_socket.get_executor().target<::asio::io_context>();
-}
-
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -267,7 +262,7 @@ template <
         );
     }
     m_isSendAllowed = false;
-    this->sendMessageHeader(0, successCallback);
+    this->sendMessageHeader(successCallback);
 }
 
 ////////////////////////////////////////////////////////////
@@ -305,7 +300,7 @@ template <
             }
 
             // send body if present
-            if (!m_messagesOut.front().isBodyEmpty()) {
+            if (m_messagesOut.front().getBodySize()) {
                 return this->sendMessageBody(successCallback);
             }
 
@@ -324,11 +319,11 @@ template <
 
     m_socket.async_send(
         ::asio::buffer(
-            m_messagesOut.front().getHeaderAddr() + bytesAlreadySent
+            &m_messagesOut.front().getHeader() + bytesAlreadySent
             , m_messagesOut.front().getHeaderSize() - bytesAlreadySent
         )
         , ::std::bind(
-              lambda
+            lambda
             , ::std::placeholders::_1
             , ::std::placeholders::_2
         )
@@ -384,7 +379,7 @@ template <
 
     m_socket.async_send(
         ::asio::buffer(
-            m_messagesOut.front().getBodyAddr() + bytesAlreadySent
+            &m_messagesOut.front().getBody() + bytesAlreadySent
             , m_messagesOut.front().getBodySize() - bytesAlreadySent
         )
         , ::std::bind(
@@ -455,7 +450,7 @@ template <
             }
 
             // send the message to the queue and start to receive messages again
-            this->transferBufferToInQueue();
+            this->transferInMessageToOwner();
             this->startReceivingMessage();
             successCallback();
         }
@@ -463,7 +458,7 @@ template <
 
     m_socket.async_receive(
         ::asio::buffer(
-            m_bufferIn.getHeaderAddr() + bytesAlreadyReceived
+            &m_bufferIn.getHeader() + bytesAlreadyReceived
             , m_bufferIn.getHeaderSize() - bytesAlreadyReceived
         )
         , ::std::bind(
@@ -509,7 +504,7 @@ template <
             }
 
             // send the message to the queue and start to receive messages again
-            this->transferBufferToInQueue();
+            this->transferInMessageToOwner();
             this->startReceivingMessage();
             successCallback();
         }
@@ -517,7 +512,7 @@ template <
 
     m_socket.async_receive(
         ::asio::buffer(
-            m_bufferIn.getBodyAddr() + bytesAlreadyReceived
+            &m_bufferIn.getAddr() + bytesAlreadyReceived
             , m_bufferIn.getBodySize() - bytesAlreadyReceived
         )
         , ::std::bind(
@@ -531,9 +526,7 @@ template <
 ////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::Connection<UserEnum>::transferBufferToInQueue()
+> void ::xrn::network::Connection<UserEnum>::transferInMessageToOwner()
 {
-    // this->pushIncommingMessage(
-        // ::xrn::network::OwnedMessage<UserEnum>{ m_bufferIn, this->shared_from_this() }
-    // );
+    m_owner->pushIncommingMessage(this->shared_from_this(), m_bufferIn);
 }

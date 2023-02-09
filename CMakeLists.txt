@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 project(CMakeSandbox LANGUAGES CXX)
 set(XRN_CXX_VERSION 23)
 
-# set(XRN_ERROR_LIMIT 10)
+set(XRN_ERROR_LIMIT 10)
 
 # dependencies
 set(XRN_PERSONAL_DEPENDENCIES xrnLog xrnMeta xrnUtil) # include other xrn projects

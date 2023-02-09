@@ -352,7 +352,7 @@ while [ $# -gt 0 ]; do
     "'re'"|"'remake'"|"'rebuild'") cleanNeeded=true; setupNeeded=true ;;
     "'test'"|"'tests'"|"'run_tests'"|"'unit_test'"|"'unit_tests'") testsNeeded=true ;;
     "'cov'"|"'coverage'") runCoverage; exit 0 ;;
-    "'clear-logs'"|"'logs'"|"'log'"|"'clear-log'") rm -rf ./.logs/.old/*; exit 0 ;;
+    "'clear-logs'"|"'logs'"|"'log'"|"'clear-log'") rm -rf ./.logs/.old/* ./.logs/*; exit 0 ;;
     esac
     shift
 done
