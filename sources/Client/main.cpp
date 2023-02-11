@@ -14,15 +14,11 @@ auto main(
     , char** argv
 ) -> int
 {
-    enum MessageType { start, stop, last };
-
     XRN_FATAL_ASSERT(argc == 3, "Usage: client <host> {}", argc);
     ::example::Client client{
         argv[1],
         static_cast<::std::uint16_t>(::std::atoi(argv[2]))
     };
-
-    client.isRunning();
 
     ::std::string str;
     while (true) {

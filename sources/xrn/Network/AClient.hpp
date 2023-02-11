@@ -190,6 +190,15 @@ public:
     /// \see getThreadContext()
     ///
     ///////////////////////////////////////////////////////////////////////////
+    [[ nodiscard ]] auto getAsioContext() const
+        -> const ::asio::io_context&;
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Get the asio context running on the thread (getThreadContext())
+    ///
+    /// \see getThreadContext()
+    ///
+    ///////////////////////////////////////////////////////////////////////////
     [[ nodiscard ]] auto getAsioContext()
         -> ::asio::io_context&;
 

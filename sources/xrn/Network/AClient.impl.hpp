@@ -20,12 +20,12 @@ template <
         [this](){
             m_asioContext.run();
         }
-    // } , m_inMessagesThread{
-        // [this](){
-            // do { // wait that the connection is setup then check if is Running
-                // this->blockingPullIncommingMessages();
-            // } while (this->isRunning());
-        // }
+    } , m_inMessagesThread{
+        [this](){
+            do { // wait that the connection is setup then check if is Running
+                this->blockingPullIncommingMessages();
+            } while (this->isRunning());
+        }
     }
 {}
 
@@ -133,6 +133,15 @@ template <
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::AClient<UserEnum>::getAsioContext() const
+    -> const ::asio::io_context&
+{
+    return m_asioContext;
+}
 
 ///////////////////////////////////////////////////////////////////////////
 template <

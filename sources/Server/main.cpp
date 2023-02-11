@@ -6,9 +6,7 @@
 ///////////////////////////////////////////////////////////////////////////
 // Headers
 ///////////////////////////////////////////////////////////////////////////
-#include <xrn/Network/Message.hpp>
-#include <xrn/Network/IClient.hpp>
-#include <xrn/Network/Connection.hpp>
+#include <Example/Server.hpp>
 
 ///////////////////////////////////////////////////////////////////////////
 auto main(
@@ -16,29 +14,17 @@ auto main(
     , char** argv
 ) -> int
 {
-    XRN_FATAL_ASSERT(argc == 2, "Usage: client <host>");
+    XRN_FATAL_ASSERT(argc == 2, "Usage: server <host>");
+
+    ::example::Server server{ static_cast<::std::uint16_t>(::std::atoi(argv[1])) };
+
+    ::std::string str;
+    while (server.isRunning()) {
+        ::std::getline(::std::cin, str);
+        if (str == "/q") {
+            server.stop();
+        }
+    }
+
     return EXIT_SUCCESS;
-
-    // ::ServerExample server{ static_cast<::std::uint16_t>(::std::atoi(argv[1])) };
-    // if (!server.start()) {
-        // return EXIT_FAILURE;
-    // }
-
-    // ::std::thread thread{
-        // [&server](){
-            // ::std::string str;
-            // while (server.isRunning()) {
-                // ::std::getline(::std::cin, str);
-                // if (str == "/q") {
-                    // server.stop();
-                // }
-            // }
-        // }
-    // };
-    // while (server.isRunning()) {
-        // server.blockingPullIncommingMessages();
-    // }
-
-    // thread.join();
-
 }

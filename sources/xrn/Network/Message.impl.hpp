@@ -10,18 +10,30 @@
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum T
-> ::xrn::network::Message<T>::Message() noexcept = default;
+> ::xrn::network::Message<T>::Message(
+    Message::ProtocolType protocolType // = Message::ProtocolType::undefined
+) noexcept
+    : m_header{
+        .messageType = 0
+        , .bodySize = 0
+    }
+    , m_index{ 0 }
+    , m_protocolType{ protocolType }
+{}
 
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum T
 > ::xrn::network::Message<T>::Message(
     Message::SystemType messageType
+    , Message::ProtocolType protocolType // = Message::ProtocolType::undefined
 ) noexcept
     : m_header{
-        .messageType = static_cast<decltype(Message::Header::messageType)>(messageType),
-        .bodySize = 0
-    }, m_index{ 0 }
+        .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
+        , .bodySize = 0
+    }
+    , m_index{ 0 }
+    , m_protocolType{ protocolType }
 {}
 
 ///////////////////////////////////////////////////////////////////////////
@@ -29,11 +41,14 @@ template <
     ::xrn::network::detail::constraint::isValidEnum T
 > ::xrn::network::Message<T>::Message(
     Message::UserType messageType
+    , Message::ProtocolType protocolType // = Message::ProtocolType::undefined
 ) noexcept
     : m_header{
-        .messageType = static_cast<decltype(Message::Header::messageType)>(messageType),
-        .bodySize = 0
-    }, m_index{ 0 }
+        .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
+        , .bodySize = 0
+    }
+    , m_index{ 0 }
+    , m_protocolType{ protocolType }
 {}
 
 ///////////////////////////////////////////////////////////////////////////
@@ -41,13 +56,16 @@ template <
     ::xrn::network::detail::constraint::isValidEnum T
 > ::xrn::network::Message<T>::Message(
     Message::SystemType messageType
+    , Message::ProtocolType protocolType
     , auto&&... args
 ) noexcept
     : m_header{
-        .messageType = static_cast<decltype(Message::Header::messageType)>(messageType),
-        .bodySize = 0
-    }, m_body{ m_header.bodySize }
+        .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
+        , .bodySize = 0
+    }
+    , m_body{ m_header.bodySize }
     , m_index{ 0 }
+    , m_protocolType{ protocolType }
 {
     this->pushMemory(0, ::std::forward<decltype(args)>(args)...);
 }
@@ -57,46 +75,18 @@ template <
     ::xrn::network::detail::constraint::isValidEnum T
 > ::xrn::network::Message<T>::Message(
     Message::UserType messageType
+    , Message::ProtocolType protocolType
     , auto&&... args
 ) noexcept
     : m_header{
-        .messageType = static_cast<decltype(Message::Header::messageType)>(messageType),
-        .bodySize = (Message::getSize(::std::forward<decltype(args)>(args)) + ...)
+        .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
+        , .bodySize = (Message::getSize(::std::forward<decltype(args)>(args)) + ...)
     }, m_body{ m_header.bodySize }
     , m_index{ 0 }
+    , m_protocolType{ protocolType }
 {
     this->pushMemory(0, ::std::forward<decltype(args)>(args)...);
 }
-
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
-// Rule of 5
-//
-///////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> ::xrn::network::Message<T>::~Message()
-{}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> ::xrn::network::Message<T>::Message(
-    Message&& that
-) noexcept = default;
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> auto ::xrn::network::Message<T>::operator=(
-    Message&& that
-) noexcept
-    -> Message& = default;
 
 
 
@@ -317,6 +307,7 @@ template <
     return m_header.bodySize;
 }
 
+///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum T
 > auto ::xrn::network::Message<T>::getType() const
@@ -325,6 +316,7 @@ template <
     return static_cast<T>(m_header.messageType);
 }
 
+///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum T
 > auto ::xrn::network::Message<T>::getTypeAsSystemType() const
@@ -333,12 +325,32 @@ template <
     return static_cast<Message::SystemType>(m_header.messageType);
 }
 
+///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum T
 > auto ::xrn::network::Message<T>::getTypeAsInt() const
     -> ::std::uint16_t
 {
     return m_header.packetType;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
+> auto ::xrn::network::Message<T>::getProtocolType() const
+    -> Message::ProtocolType
+{
+    return m_protocolType;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
+> void ::xrn::network::Message<T>::setProtocolType(
+    Message::ProtocolType protocolType
+)
+{
+    m_protocolType = protocolType;
 }
 
 

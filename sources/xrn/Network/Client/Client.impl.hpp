@@ -98,7 +98,7 @@ template <
 > auto ::xrn::network::client::Client<UserEnum>::isRunning() const
     -> bool
 {
-    this->isConnected();
+    return this->isConnected();
 }
 
 
@@ -113,47 +113,53 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::client::Client<UserEnum>::send(
+> void ::xrn::network::client::Client<UserEnum>::udpSend(
     typename ::xrn::network::Message<UserEnum>::SystemType messageType,
     auto&&... args
 )
 {
-    m_connection->send(
-        ::xrn::network::Message<UserEnum>{ messageType, ::std::forward<decltype(args)>(args)... }
+    m_connection->udpSend(
+        ::xrn::network::Message<UserEnum>{
+        messageType
+        , ::xrn::network::Message<UserEnum>::ProtocolType::udp
+        , ::std::forward<decltype(args)>(args)... }
     );
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::client::Client<UserEnum>::send(
+> void ::xrn::network::client::Client<UserEnum>::udpSend(
     UserEnum messageType,
     auto&&... args
 )
 {
-    m_connection->send(
-        ::xrn::network::Message<UserEnum>{ messageType, ::std::forward<decltype(args)>(args)... }
+    m_connection->udpSend(
+        ::xrn::network::Message<UserEnum>{
+        messageType
+        , ::xrn::network::Message<UserEnum>::ProtocolType::udp
+        , ::std::forward<decltype(args)>(args)... }
     );
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::client::Client<UserEnum>::send(
+> void ::xrn::network::client::Client<UserEnum>::udpSend(
     const ::xrn::network::Message<UserEnum>& message
 )
 {
-    m_connection->send(message);
+    m_connection->udpSend(message);
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::client::Client<UserEnum>::send(
+> void ::xrn::network::client::Client<UserEnum>::udpSend(
     ::xrn::network::Message<UserEnum>&& message
 )
 {
-    m_connection->send(::std::forward<decltype(message)>(message));
+    m_connection->udpSend(::std::forward<decltype(message)>(message));
 }
 
 

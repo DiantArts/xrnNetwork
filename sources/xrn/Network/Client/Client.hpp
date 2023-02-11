@@ -1,5 +1,8 @@
 #pragma once
 
+///////////////////////////////////////////////////////////////////////////
+// Headers
+///////////////////////////////////////////////////////////////////////////
 #include <xrn/Network/AClient.hpp>
 
 namespace xrn::network::client {
@@ -157,7 +160,7 @@ public:
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void send(
+    void udpSend(
         typename ::xrn::network::Message<UserEnum>::SystemType messageType,
         auto&&... args
     );
@@ -171,7 +174,7 @@ public:
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void send(
+    void udpSend(
         UserEnum messageType,
         auto&&... args
     );
@@ -185,7 +188,7 @@ public:
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void send(
+    void udpSend(
         const ::xrn::network::Message<UserEnum>& message
     );
 
@@ -198,7 +201,7 @@ public:
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void send(
+    void udpSend(
         ::xrn::network::Message<UserEnum>&& message
     );
 

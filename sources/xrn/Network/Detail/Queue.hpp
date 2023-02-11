@@ -66,13 +66,19 @@ public:
         -> bool;
 
     [[ nodiscard ]] auto count() const
-        -> bool;
+        -> ::std::size_t;
+
+    [[ nodiscard ]] auto lockFreeCount() const
+        -> ::std::size_t;
 
     void clear();
 
 
 
     // ------------------------------------------------------------------ blocking
+
+    [[ nodiscard ]] auto getMutex()
+        -> ::std::mutex&;
 
     void wait() const;
 

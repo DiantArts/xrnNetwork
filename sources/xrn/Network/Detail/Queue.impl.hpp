@@ -139,9 +139,17 @@ template <
 template <
     typename Type
 > auto ::xrn::network::detail::Queue<Type>::count() const
-    -> bool
+    -> ::std::size_t
 {
     ::std::scoped_lock lock{ m_mutexQueue };
+    return m_deque.size();
+}
+
+template <
+    typename Type
+> auto ::xrn::network::detail::Queue<Type>::lockFreeCount() const
+    -> ::std::size_t
+{
     return m_deque.size();
 }
 
@@ -156,6 +164,14 @@ template <
 
 
 // ------------------------------------------------------------------ blocking
+
+template <
+    typename Type
+> auto ::xrn::network::detail::Queue<Type>::getMutex()
+    -> ::std::mutex&
+{
+    return m_mutexQueue;
+}
 
 template <
     typename Type
