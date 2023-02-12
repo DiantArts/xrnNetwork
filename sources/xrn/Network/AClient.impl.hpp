@@ -19,6 +19,9 @@ template <
         // Create the asio thread and its context that will hold every network actions
         [this](){
             m_asioContext.run();
+            if (this->isRunning()) {
+                XRN_ERROR("Asio context stopped running while still running");
+            }
         }
     } , m_inMessagesThread{
         [this](){
@@ -43,13 +46,19 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > ::xrn::network::AClient<UserEnum>::~AClient()
 {
+    XRN_DEBUG("Destroying...");
     m_asioContext.stop();
     if (m_asioContextThread.joinable()) {
+        XRN_DEBUG("Joining asio thread...");
         m_asioContextThread.join();
+        XRN_DEBUG("...Asio thread joined");
     }
     if (m_inMessagesThread.joinable()) {
+        XRN_DEBUG("Joining messages thread...");
         m_inMessagesThread.join();
+        XRN_DEBUG("...Messages thread joined");
     }
+    XRN_DEBUG("...Destroyed");
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -159,4 +168,13 @@ template <
     -> ::std::thread&
 {
     return m_asioContextThread;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::AClient<UserEnum>::isRunning() const
+    -> bool
+{
+    return m_isRunning;
 }

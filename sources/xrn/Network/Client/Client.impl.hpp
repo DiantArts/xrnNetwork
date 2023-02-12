@@ -35,7 +35,9 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > ::xrn::network::client::Client<UserEnum>::~Client()
 {
+    XRN_DEBUG("Destroying client");
     this->disconnect();
+    XRN_DEBUG("...Client destroyed");
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -73,6 +75,7 @@ template <
     m_connection = ::std::make_shared<::xrn::network::Connection<UserEnum>>(
         host, port, *this
     );
+    this->m_isRunning = true;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -80,7 +83,9 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::client::Client<UserEnum>::disconnect()
 {
+    this->m_isRunning = false;
     m_connection.reset();
+    XRN_DEBUG("Client disconnected");
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -92,20 +97,72 @@ template <
     return m_connection && m_connection->isConnected();
 }
 
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Tcp
+//
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> auto ::xrn::network::client::Client<UserEnum>::isRunning() const
-    -> bool
+> void ::xrn::network::client::Client<UserEnum>::tcpSend(
+    typename ::xrn::network::Message<UserEnum>::SystemType messageType,
+    auto&&... args
+)
 {
-    return this->isConnected();
+    m_connection->tcpSend(
+        ::xrn::network::Message<UserEnum>{
+        messageType
+        , ::xrn::network::Message<UserEnum>::ProtocolType::tcp
+        , ::std::forward<decltype(args)>(args)... }
+    );
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::client::Client<UserEnum>::tcpSend(
+    UserEnum messageType,
+    auto&&... args
+)
+{
+    m_connection->tcpSend(
+        ::xrn::network::Message<UserEnum>{
+        messageType
+        , ::xrn::network::Message<UserEnum>::ProtocolType::tcp
+        , ::std::forward<decltype(args)>(args)... }
+    );
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::client::Client<UserEnum>::tcpSend(
+    const ::xrn::network::Message<UserEnum>& message
+)
+{
+    m_connection->tcpSend(message);
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::client::Client<UserEnum>::tcpSend(
+    ::xrn::network::Message<UserEnum>&& message
+)
+{
+    m_connection->tcpSend(::std::forward<decltype(message)>(message));
 }
 
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// Incomming messages
+// Udp
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -175,8 +232,8 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > auto ::xrn::network::client::Client<UserEnum>::handleIncommingSystemMessages(
-    ::std::shared_ptr<::xrn::network::Connection<UserEnum>> connection
-    , ::xrn::network::Message<UserEnum>& message
+    ::std::shared_ptr<::xrn::network::Connection<UserEnum>> connection [[ maybe_unused ]]
+    , ::xrn::network::Message<UserEnum>& message [[ maybe_unused ]]
 ) -> bool
 {
     return false;

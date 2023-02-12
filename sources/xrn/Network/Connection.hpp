@@ -134,6 +134,34 @@ public:
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
+    /// \brief Connect to a client
+    ///
+    /// Server only function
+    ///
+    /// \parm host IP address of the host (remote)
+    /// \parm port Port of the IP address of the host (remote)
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void connectToClient(
+        const ::std::string& host
+        , ::std::uint16_t port
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Connect to a server
+    ///
+    /// Client only function
+    ///
+    /// \parm host IP address of the host (remote)
+    /// \parm port Port of the IP address of the host (remote)
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void connectToServer(
+        const ::std::string& host
+        , ::std::uint16_t port
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
     /// \brief Close the connection from the target
     ///
     /// Cancels every asynchronous actions and close the socket
@@ -157,22 +185,13 @@ public:
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////
-    // UDP
+    // TCP
     //
     ///////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
-    /// \brief set a target for the UDP messages
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    void udpTarget(
-          const ::std::string& host
-        , const ::std::uint16_t port
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send a udp message
+    /// \brief Send a tcp message
     ///
     /// Asynchronously pushes the to the message into the queue of outgoing
     /// messages
@@ -182,12 +201,12 @@ public:
     /// \param message Rvalue reference to the message to send
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void udpSend(
+    void tcpSend(
         const ::xrn::network::Message<UserEnum>& message
     );
 
     ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send a udp message
+    /// \brief Send a tcp message
     ///
     /// Asynchronously pushes the to the message into the queue of outgoing
     /// messages
@@ -197,12 +216,12 @@ public:
     /// \param message Rvalue reference to the message to send
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void udpSend(
+    void tcpSend(
         ::xrn::network::Message<UserEnum>&& message
     );
 
     ///////////////////////////////////////////////////////////////////////////
-    /// \brief Test whether there is Awaiting udp messages to be sent
+    /// \brief Test whether there is Awaiting tcp messages to be sent
     ///
     /// Test if the outgoing queue of messages is empty. If it is,
     /// it means no messages are awaiting to be sent
@@ -210,11 +229,11 @@ public:
     /// \return True if messages are awaiting to be sent
     ///
     ///////////////////////////////////////////////////////////////////////////
-    auto hasSendingUdpMessagesAwaiting() const
+    auto hasSendingTcpMessagesAwaiting() const
         -> bool;
 
     ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send awaiting udp messages
+    /// \brief Send awaiting tcp messages
     ///
     /// Asynchronously sends all the messages inside the outgoing queue of
     /// messages by calling sendMessage()
@@ -225,7 +244,7 @@ public:
     /// undefined behavior and/or potential segfaults
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void sendAwaitingUdpMessages();
+    void sendAwaitingTcpMessages();
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Start receiving messages
@@ -235,7 +254,25 @@ public:
     /// transferInMessageToOwner()
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void startReceivingUdpMessage();
+    void startReceivingTcpMessage();
+
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // UDP
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief set a target for the UDP messages
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void setUdpTarget(
+        const ::std::string& host
+        , const ::std::uint16_t port
+    );
 
 
 
@@ -315,15 +352,58 @@ private:
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Send a message in the queue
     ///
-    /// Same as sendTcpMessage(), but does not copy the message, but
+    /// Sends the message in front of the queue. Once sent, the message is
+    /// deleted
+    //
+    /// \param successCallback Function, lambda or class called on success
+    //
+    ///////////////////////////////////////////////////////////////////////////
+    void sendTcpQueueMessage(
+        ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Send a message in the queue
+    ///
+    /// Sends the message in front of the queue. Once sent, the message is
+    /// deleted. Skip the check of m_isSendingAllowed
+    //
+    /// \param successCallback Function, lambda or class called on success
+    //
+    ///////////////////////////////////////////////////////////////////////////
+    void forceSendTcpQueueMessage(
+        ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Send a message in the queue
+    ///
+    /// Same as sendNonQueuedTcpMessage(), but does not copy the message, but
     /// sends the message in front of the queue
     /// Once sent, the message is deleted
     //
     /// \param successCallback Function, lambda or class called on success
     //
     ///////////////////////////////////////////////////////////////////////////
-    void sendTcpMessage(
-        auto successCallback
+    void sendNonQueuedTcpMessage(
+        ::xrn::network::Message<UserEnum>&& message
+        , ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Send a message in the queue
+    ///
+    /// Same as sendNonQueuedTcpMessage(), but does not copy the message, but
+    /// sends the message in front of the queue
+    /// Once sent, the message is deleted
+    /// Skip the check of m_isSendingAllowed
+    //
+    /// \param successCallback Function, lambda or class called on success
+    //
+    ///////////////////////////////////////////////////////////////////////////
+    void forceSendNonQueuedTcpMessage(
+        ::xrn::network::Message<UserEnum>&& message
+        , ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
     );
 
     ///////////////////////////////////////////////////////////////////////////
@@ -337,7 +417,8 @@ private:
     //
     ///////////////////////////////////////////////////////////////////////////
     void sendTcpMessageHeader(
-          auto successCallback
+        ::xrn::network::Message<UserEnum>&& message
+        , ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
         , ::std::size_t bytesAlreadySent = 0
     );
 
@@ -352,7 +433,8 @@ private:
     //
     ///////////////////////////////////////////////////////////////////////////
     void sendTcpMessageBody(
-          auto successCallback
+        ::xrn::network::Message<UserEnum>&& message
+        , ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
         , ::std::size_t bytesAlreadySent = 0
     );
 
@@ -362,13 +444,15 @@ private:
     /// Asynchronously wait on the asio thread for a messages to arrive
     /// once a message arrived, it's tranfered to the incomming buffer
     /// and the successCallback is called
+    /// If already receiving, m_tcpBufferInLocker will block the call till
+    /// unlocked
     /// In case of errors, Both Tcp and Tcp connection are closed
     //
     /// \param successCallback Function, lambda or class called on success
     ///
     ///////////////////////////////////////////////////////////////////////////
     void receiveTcpMessage(
-        auto successCallback
+        ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
     );
 
     ///////////////////////////////////////////////////////////////////////////
@@ -382,7 +466,7 @@ private:
     //
     ///////////////////////////////////////////////////////////////////////////
     void receiveTcpMessageHeader(
-          auto successCallback
+        ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
         , ::std::size_t bytesAlreadyReceived = 0
     );
 
@@ -396,104 +480,7 @@ private:
     //
     ///////////////////////////////////////////////////////////////////////////
     void receiveTcpMessageBody(
-          auto successCallback
-        , ::std::size_t bytesAlreadyReceived = 0
-    );
-
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    // Udp helpers
-    //
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send a message in the queue
-    ///
-    /// Same as sendUdpMessage(), but does not copy the message, but
-    /// sends the message in front of the queue
-    /// Once sent, the message is deleted
-    //
-    /// \param successCallback Function, lambda or class called on success
-    //
-    ///////////////////////////////////////////////////////////////////////////
-    void sendUdpMessage(
-        auto successCallback
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send the header of a message in the queue
-    ///
-    /// Once sent, if the body is not empty, it is automatically sent as well
-    //
-    /// \param bytesAlreadySent Allows for sending over multiple packet
-    ///                         already sent with previous calls
-    /// \param successCallback Function, lambda or class called on success
-    //
-    ///////////////////////////////////////////////////////////////////////////
-    void sendUdpMessageHeader(
-          auto successCallback
-        , ::std::size_t bytesAlreadySent = 0
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send the body of a message in the queue
-    ///
-    /// The header of this message must has already been sent
-    ///
-    /// \param bytesAlreadySent Allows for sending over multiple packet
-    ///                         already sent with previous calls
-    /// \param successCallback Function, lambda or class called on success
-    //
-    ///////////////////////////////////////////////////////////////////////////
-    void sendUdpMessageBody(
-          auto successCallback
-        , ::std::size_t bytesAlreadySent = 0
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Receive a message
-    ///
-    /// Asynchronously wait on the asio thread for a messages to arrive
-    /// once a message arrived, it's tranfered to the incomming buffer
-    /// and the successCallback is called
-    /// In case of errors, Both Udp and Tcp connection are closed
-    //
-    /// \param successCallback Function, lambda or class called on success
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    void receiveUdpMessage(
-        auto successCallback
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Receive the header of a message in the queue
-    ///
-    /// Once sent, if the body is not empty, it is automatically received as
-    /// well
-    //
-    /// \param bytesAlreadySent Allows to receive message over multiple packet
-    /// \param successCallback Function, lambda or class called on success
-    //
-    ///////////////////////////////////////////////////////////////////////////
-    void receiveUdpMessageHeader(
-          auto successCallback
-        , ::std::size_t bytesAlreadyReceived = 0
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send the body of a message in the queue
-    ///
-    /// The header of this message must has already been received
-    ///
-    /// \param bytesAlreadyReceived Allows to receive message over multiple packet
-    /// \param successCallback Function, lambda or class called on success
-    //
-    ///////////////////////////////////////////////////////////////////////////
-    void receiveUdpMessageBody(
-          auto successCallback
+        ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
         , ::std::size_t bytesAlreadyReceived = 0
     );
 
@@ -528,12 +515,6 @@ private:
     ///////////////////////////////////////////////////////////////////////////
     ::std::atomic_bool m_isSendingAllowed{ false };
 
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Signals that messages are currenly being sent
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    ::std::atomic_uint8_t m_numberOfSendingInstances{ 0 };
-
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -559,10 +540,22 @@ private:
     ::xrn::network::Message<UserEnum> m_tcpBufferIn;
 
     ///////////////////////////////////////////////////////////////////////////
+    /// \brief Lock the access of the buffer allowing messages to be received
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    ::std::mutex m_tcpBufferInLocker;
+
+    ///////////////////////////////////////////////////////////////////////////
     /// \brief Queue of all the tcp messages about to be sent
     ///
     ///////////////////////////////////////////////////////////////////////////
     ::xrn::network::detail::Queue<::xrn::network::Message<UserEnum>> m_tcpMessagesOut;
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Signals that messages are currenly being sent
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    ::std::atomic_uint8_t m_numberOfTcpSendingInstances{ 0 };
 
 
 
@@ -589,10 +582,22 @@ private:
     ::xrn::network::Message<UserEnum> m_udpBufferIn;
 
     ///////////////////////////////////////////////////////////////////////////
+    /// \brief Lock the access of the buffer allowing messages to be received
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    ::std::mutex m_udpBufferInLocker;
+
+    ///////////////////////////////////////////////////////////////////////////
     /// \brief Queue of all the udp messages about to be sent
     ///
     ///////////////////////////////////////////////////////////////////////////
     ::xrn::network::detail::Queue<::xrn::network::Message<UserEnum>> m_udpMessagesOut;
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Signals that messages are currenly being sent
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    ::std::atomic_uint8_t m_numberOfUdpSendingInstances{ 0 };
 
 };
 

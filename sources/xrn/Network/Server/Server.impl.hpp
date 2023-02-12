@@ -67,6 +67,7 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::server::Server<UserEnum>::start()
 {
+    this->m_isRunning = true;
     this->startReceivingConnections();
 }
 
@@ -76,18 +77,10 @@ template <
 > void ::xrn::network::server::Server<UserEnum>::stop()
 {
     if (this->isRunning()) {
+        this->m_isRunning = false;
         this->getAsioContext().stop();
         this->notifyIncommingMessageQueue();
     }
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum UserEnum
-> auto ::xrn::network::server::Server<UserEnum>::isRunning() const
-    -> bool
-{
-    return !this->getAsioContext().stopped();
 }
 
 
@@ -175,6 +168,7 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::server::Server<UserEnum>::startReceivingConnections()
 {
+    XRN_DEBUG();
     m_connectionAcceptor.async_accept(
         [this](
             const ::std::error_code& errCode,
@@ -188,11 +182,21 @@ template <
                     XRN_ERROR("Server: Failed to accept connection");
                 }
             } else {
-                // XRN_LOG("Server: New incomming connection: {}", socket.remote_endpoint());
-                // m_connections.emplace_back(::std::move(socket), *this);
+                XRN_LOG(
+                    "Server: New incomming connection: {}:{}"
+                    , socket.remote_endpoint().address().to_string()
+                    , socket.remote_endpoint().port()
+                );
+                m_connections.push_back(
+                    ::std::make_shared<::xrn::network::Connection<UserEnum>>(
+                        ::std::move(socket), *this
+                    )
+                );
             }
 
-            this->startReceivingConnections();
+            if (this->isRunning()) {
+                this->startReceivingConnections();
+            }
         }
     );
 }

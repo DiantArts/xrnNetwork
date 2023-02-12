@@ -26,7 +26,7 @@ public:
             case ::example::MessageType::message: {
                 auto str{ message.pull<::std::string>() };
                 ::fmt::print("<- C{}: {}\n", connection->getId(), str);
-                connection->udpSend(message);
+                connection->tcpSend(message);
             break;
         } default: break;
         }
