@@ -57,6 +57,30 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
+// Connection managment
+//
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::server::Server<UserEnum>::removeConnection(
+    ::std::shared_ptr<::xrn::network::Connection<UserEnum>> disconnectedConnection
+)
+{
+    ::std::erase_if(
+        m_connections,
+        [disconnectedConnection](const auto& connection){
+            return connection.get() == disconnectedConnection.get();
+        }
+    );
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
 // Run managment
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -96,7 +120,7 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::server::Server<UserEnum>::send(
-    const ::xrn::network::Message<UserEnum>& message
+    ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
         ::xrn::network::Connection<UserEnum>
     >> auto... clients
@@ -111,7 +135,7 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::server::Server<UserEnum>::send(
-    const ::xrn::network::Message<UserEnum>& message
+    ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... clients
 )
 {
@@ -126,7 +150,7 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::server::Server<UserEnum>::sendToAll(
-    const ::xrn::network::Message<UserEnum>& message
+    ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
         ::xrn::network::Connection<UserEnum>
     >> auto... ignoredClients
@@ -143,7 +167,7 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::server::Server<UserEnum>::sendToAll(
-    const ::xrn::network::Message<UserEnum>& message
+    ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... ignoredClients
 )
 {
@@ -187,11 +211,11 @@ template <
                     , socket.remote_endpoint().address().to_string()
                     , socket.remote_endpoint().port()
                 );
-                m_connections.push_back(
-                    ::std::make_shared<::xrn::network::Connection<UserEnum>>(
-                        ::std::move(socket), *this
-                    )
-                );
+                auto connection{ ::std::make_shared<::xrn::network::Connection<UserEnum>>(
+                    ::std::move(socket), *this
+                ) };
+                connection->connectToClient();
+                m_connections.push_back(::std::move(connection));
             }
 
             if (this->isRunning()) {
@@ -205,8 +229,8 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > auto ::xrn::network::server::Server<UserEnum>::handleIncommingSystemMessages(
-    ::std::shared_ptr<::xrn::network::Connection<UserEnum>> connection
-    , ::xrn::network::Message<UserEnum>& message
+    ::std::shared_ptr<::xrn::network::Connection<UserEnum>> connection [[ maybe_unused ]]
+    , ::xrn::network::Message<UserEnum>& message [[ maybe_unused ]]
 ) -> bool
 {
     return false;

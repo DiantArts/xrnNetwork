@@ -49,13 +49,12 @@ public:
     /// Starts an asynchronous connection to a server on the asio thread
     /// disconnect() will be automatically called if needed
     ///
-    /// \param socket The udp socket from asio, generated beforehand
+    /// /warning Not calling connectToServer() after creating the connection
+    /// leads to undefined behavior
     ///
     ///////////////////////////////////////////////////////////////////////////
     explicit Connection(
-        const ::std::string& host
-        , ::std::uint16_t port
-        , ::xrn::network::AClient<UserEnum>& owner
+        ::xrn::network::AClient<UserEnum>& owner
     );
 
     ///////////////////////////////////////////////////////////////////////////
@@ -63,6 +62,9 @@ public:
     ///
     /// Starts an asynchronous connection to a server on the asio thread
     /// disconnect() will be automatically called if needed
+    ///
+    /// /warning Not calling connectToClient() after creating the connection
+    /// leads to undefined behavior
     ///
     /// \param socket The udp socket from asio, generated beforehand
     ///
@@ -138,14 +140,8 @@ public:
     ///
     /// Server only function
     ///
-    /// \parm host IP address of the host (remote)
-    /// \parm port Port of the IP address of the host (remote)
-    ///
     ///////////////////////////////////////////////////////////////////////////
-    void connectToClient(
-        const ::std::string& host
-        , ::std::uint16_t port
-    );
+    void connectToClient();
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Connect to a server
@@ -166,20 +162,12 @@ public:
     ///
     /// Cancels every asynchronous actions and close the socket
     ///
-    ///////////////////////////////////////////////////////////////////////////
-    void disconnect();
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Test the connection's status
-    ///
-    /// The connection can be unusable due to disconnect calls, errors
-    /// happening on other threads or the target disconnecting
-    ///
-    /// \return True if the connection is still usable, false otherwise
+    /// \arg isAlreadyDestroyed Calls m_owner.removeConnection if not destroyed
     ///
     ///////////////////////////////////////////////////////////////////////////
-    [[ nodiscard ]] auto isConnected() const
-        -> bool;
+    void disconnect(
+        bool isAlreadyDestroyed = false
+    );
 
 
 
@@ -202,7 +190,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void tcpSend(
-        const ::xrn::network::Message<UserEnum>& message
+        ::xrn::network::Message<UserEnum>& message
     );
 
     ///////////////////////////////////////////////////////////////////////////
@@ -217,6 +205,26 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void tcpSend(
+        ::xrn::network::Message<UserEnum>&& message
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Send a tcp message and block the execution till it is sent
+    ///
+    /// \param message Rvalue reference to the message to send
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void blockingTcpSend(
+        const ::xrn::network::Message<UserEnum>& message
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Send a tcp message and block the execution till it is sent
+    ///
+    /// \param message Rvalue reference to the message to send
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void blockingTcpSend(
         ::xrn::network::Message<UserEnum>&& message
     );
 
@@ -447,6 +455,9 @@ private:
     /// If already receiving, m_tcpBufferInLocker will block the call till
     /// unlocked
     /// In case of errors, Both Tcp and Tcp connection are closed
+    ///
+    /// \warning must call m_tcpBufferInLocker.unlock() to release the
+    /// buffer once received
     //
     /// \param successCallback Function, lambda or class called on success
     ///

@@ -131,7 +131,9 @@ template <
     , ::xrn::network::Message<UserEnum> message
 )
 {
-    m_messagesIn.emplace_back(connection, ::std::move(message));
+    m_messagesIn.push_back(
+        ::xrn::network::OwnedMessage<UserEnum>{ connection, ::std::move(message) }
+    );
 }
 
 

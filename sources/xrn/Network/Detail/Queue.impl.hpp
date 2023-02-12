@@ -62,6 +62,16 @@ template <
 
 template <
     typename Type
+> auto ::xrn::network::detail::Queue<Type>::lockFree_pop_front()
+    -> Type
+{
+    auto tmpValue{ ::std::move(m_deque.front()) };
+    m_deque.pop_front();
+    return tmpValue;
+}
+
+template <
+    typename Type
 > void ::xrn::network::detail::Queue<Type>::remove_front()
 {
     ::std::scoped_lock lock{ m_mutexQueue };
@@ -133,6 +143,14 @@ template <
     -> bool
 {
     ::std::scoped_lock lock{ m_mutexQueue };
+    return m_deque.empty();
+}
+
+template <
+    typename Type
+> auto ::xrn::network::detail::Queue<Type>::lockFreeEmpty() const
+    -> bool
+{
     return m_deque.empty();
 }
 

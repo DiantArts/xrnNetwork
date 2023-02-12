@@ -48,7 +48,12 @@ template <
     ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
 ) -> bool
 {
-    XRN_LOG("C{} Connected", target->getId());
+    XRN_LOG(
+        "C{} ({}:{}) Connected"
+        , target->getId()
+        , target->getAddress()
+        , target->getPort()
+    );
     return true;
 }
 
@@ -59,7 +64,12 @@ template <
     ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
 )
 {
-    XRN_LOG("C{}: disconnected", target->getId());
+    XRN_LOG(
+        "C{} ({}:{}) Disconnected"
+        , target->getId()
+        , target->getAddress()
+        , target->getPort()
+    );
 }
 
 ///////////////////////////////////////////////////////////////////////////

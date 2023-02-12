@@ -14,8 +14,8 @@ template <
     Message::ProtocolType protocolType // = Message::ProtocolType::undefined
 ) noexcept
     : m_header{
-        .messageType = 0
-        , .bodySize = 0
+        .bodySize = 0
+        , .messageType = 0
     }
     , m_index{ 0 }
     , m_protocolType{ protocolType }
@@ -29,8 +29,8 @@ template <
     , Message::ProtocolType protocolType // = Message::ProtocolType::undefined
 ) noexcept
     : m_header{
-        .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
-        , .bodySize = 0
+        .bodySize = 0
+        , .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
     }
     , m_index{ 0 }
     , m_protocolType{ protocolType }
@@ -44,8 +44,8 @@ template <
     , Message::ProtocolType protocolType // = Message::ProtocolType::undefined
 ) noexcept
     : m_header{
-        .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
-        , .bodySize = 0
+        .bodySize = 0
+        , .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
     }
     , m_index{ 0 }
     , m_protocolType{ protocolType }
@@ -60,8 +60,8 @@ template <
     , auto&&... args
 ) noexcept
     : m_header{
-        .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
-        , .bodySize = 0
+        .bodySize = 0
+        , .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
     }
     , m_body{ m_header.bodySize }
     , m_index{ 0 }
@@ -79,8 +79,8 @@ template <
     , auto&&... args
 ) noexcept
     : m_header{
-        .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
-        , .bodySize = (Message::getSize(::std::forward<decltype(args)>(args)) + ...)
+        .bodySize = (Message::getSize(::std::forward<decltype(args)>(args)) + ...)
+        , .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
     }, m_body{ m_header.bodySize }
     , m_index{ 0 }
     , m_protocolType{ protocolType }
@@ -278,6 +278,15 @@ template <
     -> ::std::vector<::std::byte>&
 {
     return m_body;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
+> auto ::xrn::network::Message<T>::isBodyEmpty() const
+    -> bool
+{
+    return m_body.empty();
 }
 
 ///////////////////////////////////////////////////////////////////////////

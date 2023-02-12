@@ -37,6 +37,9 @@ public:
     [[ nodiscard ]] auto pop_front()
         -> Type;
 
+    [[ nodiscard ]] auto lockFree_pop_front()
+        -> Type;
+
     void remove_front();
 
 
@@ -63,6 +66,9 @@ public:
     // ------------------------------------------------------------------ helpers
 
     [[ nodiscard ]] auto empty() const
+        -> bool;
+
+    [[ nodiscard ]] auto lockFreeEmpty() const
         -> bool;
 
     [[ nodiscard ]] auto count() const

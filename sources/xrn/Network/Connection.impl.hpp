@@ -9,9 +9,7 @@
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > ::xrn::network::Connection<UserEnum>::Connection(
-    const ::std::string& host
-    , ::std::uint16_t port
-    , ::xrn::network::AClient<UserEnum>& owner
+    ::xrn::network::AClient<UserEnum>& owner
 )
     : m_owner{ owner }
     , m_tcpSocket{ m_owner.getAsioContext() }
@@ -19,8 +17,7 @@ template <
     , m_udpSocket{ m_owner.getAsioContext() }
     , m_udpBufferIn{ ::xrn::network::Message<UserEnum>::ProtocolType::udp }
 {
-    XRN_DEBUG("C{}: Created", m_id);
-    this->connectToServer(host, port);
+    XRN_DEBUG("C{} Created", m_id);
 }
 
 ////////////////////////////////////////////////////////////
@@ -36,7 +33,7 @@ template <
     , m_udpSocket{ m_owner.getAsioContext() }
     , m_udpBufferIn{ ::xrn::network::Message<UserEnum>::ProtocolType::udp }
 {
-    XRN_DEBUG("C{}: Created", m_id);
+    XRN_DEBUG("C{} Created", m_id);
 }
 
 
@@ -53,9 +50,7 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > ::xrn::network::Connection<UserEnum>::~Connection()
 {
-    XRN_DEBUG("C{}: Destroying...", m_id);
-    this->disconnect();
-    XRN_DEBUG("C{}: ...Destroyed", m_id);
+    this->disconnect(true);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -85,18 +80,21 @@ template <
 ////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::Connection<UserEnum>::connectToClient(
-    const ::std::string& host [[ maybe_unused ]]
-    , const ::std::uint16_t port [[ maybe_unused ]]
-)
+> void ::xrn::network::Connection<UserEnum>::connectToClient()
 {
-    if (m_tcpSocket.is_open()) {
-        if (m_owner.onConnect(this->shared_from_this())) {
-            // this->identification();
-        }
-    } else {
-        XRN_THROW("TCP{}: Invalid socket", m_id);
+    if (!m_tcpSocket.is_open()) {
+        XRN_THROW("TCP{} Invalid socket", m_id);
     }
+
+    if (!m_owner.onConnect(this->shared_from_this())) {
+        XRN_LOG("TCP{} Connection Refused", m_id);
+        return this->disconnect();
+    }
+
+    XRN_LOG("TCP{} Connection accepted", m_id);
+    this->startReceivingTcpMessage();
+    m_isSendingAllowed = true;
+    // this->setUdpTarget();
 }
 
 ////////////////////////////////////////////////////////////
@@ -107,7 +105,7 @@ template <
     , const ::std::uint16_t port
 )
 {
-    XRN_DEBUG("TCP{}: request connect to server {}:{}", m_id, host, port);
+    XRN_LOG("TCP{} request connect to server {}:{}", m_id, host, port);
     m_tcpSocket.async_connect(
         ::asio::ip::tcp::endpoint{ ::asio::ip::address::from_string(host), port }
         , [this, &host = host, port](
@@ -115,10 +113,10 @@ template <
         ) {
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_ERROR("TCP{}: Connection canceled", m_id);
+                    XRN_ERROR("TCP{} Connection canceled", m_id);
                 } else {
                     XRN_ERROR(
-                        "TCP{}: Failed to connect to {}:{}: {}"
+                        "TCP{} Failed to connect to {}:{}: {}"
                         , m_id
                         , host
                         , port
@@ -128,12 +126,14 @@ template <
                 return;
             }
 
-            XRN_DEBUG("TCP{}: Connection accepted", m_id);
             if (!m_owner.onConnect(this->shared_from_this())) {
-                this->disconnect();
-            } else {
-                // this->identification();
+                return this->disconnect();
             }
+
+            XRN_LOG("TCP{} Connection accepted", m_id);
+            m_isSendingAllowed = true;
+            this->startReceivingTcpMessage();
+            // this->setUdpTarget();
         }
     );
 }
@@ -141,27 +141,38 @@ template <
 ////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::Connection<UserEnum>::disconnect()
+> void ::xrn::network::Connection<UserEnum>::disconnect(
+    bool isAlreadyDestroyed // = false
+)
 {
-    XRN_DEBUG("C{}: Disconnecting...", m_id);
-    if (m_udpSocket.is_open()) {
-        m_isSendingAllowed = false;
-        m_udpSocket.cancel();
-        m_udpSocket.close();
-        XRN_DEBUG("C{}: ...Disconnected", m_id);
-    } else {
-        XRN_ERROR("C{}: ... Already disconnected", m_id);
-    }
-    m_owner.notifyIncommingMessageQueue();
-}
+    if (m_tcpSocket.is_open()) {
+        XRN_DEBUG("C{} Disconnecting...", m_id);
 
-////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum UserEnum
-> auto ::xrn::network::Connection<UserEnum>::isConnected() const
-    -> bool
-{
-    return m_udpSocket.is_open();
+        if (!isAlreadyDestroyed) {
+            m_owner.onDisconnect(this->shared_from_this());
+        }
+
+        m_isSendingAllowed = false;
+
+        // tcp
+        m_tcpSocket.cancel();
+        m_tcpSocket.close();
+
+        // udp
+        if (m_udpSocket.is_open()) {
+            m_udpSocket.cancel();
+            m_udpSocket.close();
+        }
+
+        // probably waiting, notify it
+        m_owner.notifyIncommingMessageQueue();
+
+        XRN_DEBUG("C{} ...Disconnected", m_id);
+
+        if (!isAlreadyDestroyed) {
+            m_owner.removeConnection(this->shared_from_this());
+        }
+    }
 }
 
 
@@ -177,15 +188,16 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::Connection<UserEnum>::tcpSend(
-    const ::xrn::network::Message<UserEnum>& message
+    ::xrn::network::Message<UserEnum>& message
 )
 {
-    XRN_DEBUG("TCP{} -> ...", m_id);
-    m_tcpMessagesOut.push_back(message);
-    ::std::scoped_lock locker{ m_tcpMessagesOut.getMutex() };
-    if (m_tcpMessagesOut.lockFreeCount() == 1) {
-        this->sendAwaitingTcpMessages();
+    if (!m_owner.onSend(message, this->shared_from_this())) {
+        XRN_ERROR("TCP{} Send canceled", m_id);
+        return;
     }
+
+    m_tcpMessagesOut.push_back(message);
+    this->sendAwaitingTcpMessages();
 }
 
 ////////////////////////////////////////////////////////////
@@ -195,12 +207,55 @@ template <
     ::xrn::network::Message<UserEnum>&& message
 )
 {
-    XRN_DEBUG("TCP{} -> ...", m_id);
-    m_tcpMessagesOut.push_back(::std::move(message));
-    ::std::scoped_lock locker{ m_tcpMessagesOut.getMutex() };
-    if (m_tcpMessagesOut.lockFreeCount() == 1) {
-        this->sendAwaitingTcpMessages();
+    if (!m_owner.onSend(message, this->shared_from_this())) {
+        XRN_ERROR("TCP{} Send canceled", m_id);
+        return;
     }
+
+    m_tcpMessagesOut.push_back(::std::move(message));
+    this->sendAwaitingTcpMessages();
+}
+
+////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::Connection<UserEnum>::blockingTcpSend(
+    const ::xrn::network::Message<UserEnum>& message
+)
+{
+    if (!m_owner.onSend(message, this->shared_from_this())) {
+        XRN_ERROR("TCP{} Send canceled", m_id);
+        return;
+    }
+
+    ::std::mutex locker;
+    locker.lock();
+
+    this->sendNonQueuedTcpMessage(message, [&locker](){ locker.unlock(); });
+
+    // selfblock (avoid using a condition variable)
+    locker.lock();
+}
+
+////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::Connection<UserEnum>::blockingTcpSend(
+    ::xrn::network::Message<UserEnum>&& message
+)
+{
+    if (!m_owner.onSend(message, this->shared_from_this())) {
+        XRN_ERROR("TCP{} Send canceled", m_id);
+        return;
+    }
+
+    ::std::mutex locker;
+    locker.lock();
+
+    this->sendNonQueuedTcpMessage(::std::move(message), [&locker](){ locker.unlock(); });
+
+    // selfblock (avoid using a condition variable)
+    locker.lock();
 }
 
 ////////////////////////////////////////////////////////////
@@ -217,10 +272,8 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::Connection<UserEnum>::sendAwaitingTcpMessages()
 {
-    if (m_isSendingAllowed) {
-        ++m_numberOfTcpSendingInstances;
-        this->sendTcpQueueMessage([this](){ --m_numberOfTcpSendingInstances; });
-    }
+    ++m_numberOfTcpSendingInstances;
+    this->sendTcpQueueMessage([this](){ --m_numberOfTcpSendingInstances; });
 }
 
 ////////////////////////////////////////////////////////////
@@ -228,12 +281,13 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::Connection<UserEnum>::startReceivingTcpMessage()
 {
-    XRN_DEBUG("TCP{}: Start receiving messages", m_id);
+    XRN_DEBUG("TCP{} Start receiving messages", m_id);
     this->receiveTcpMessage(
         [this](){
             // send the message to the queue and start to receive messages again
             this->transferInMessageToOwner(::std::move(m_tcpBufferIn));
-            this->startReceivingUdpMessage();
+            // m_tcpBufferInLocker.unlock();
+            this->startReceivingTcpMessage();
         }
     );
 }
@@ -367,7 +421,8 @@ template <
     const ::xrn::network::Message<UserEnum>& buffer
 )
 {
-    m_owner->pushIncommingMessage(this->shared_from_this(), buffer);
+    m_owner.pushIncommingMessage(this->shared_from_this(), buffer);
+    m_owner.notifyIncommingMessageQueue();
 }
 
 
@@ -388,13 +443,20 @@ template <
 {
     if (!m_isSendingAllowed) {
         XRN_ERROR(
-            "TCP{}: {}"
+            "TCP{} {}"
             , m_id
             , "The connection is currently unable to send messages"
         );
         return;
     }
-    this->sendTcpMessageHeader(m_tcpMessagesOut.pop_front(), successCallback);
+
+    if (
+        ::std::scoped_lock locker{ m_tcpMessagesOut.getMutex() };
+        !m_tcpMessagesOut.lockFreeEmpty()
+    ) {
+        XRN_DEBUG("TCP{} Start sending messages", m_id);
+        this->sendTcpMessageHeader(m_tcpMessagesOut.lockFree_pop_front(), successCallback);
+    }
 }
 
 ////////////////////////////////////////////////////////////
@@ -404,7 +466,13 @@ template <
     ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
 )
 {
-    this->sendTcpMessageHeader(m_tcpMessagesOut.pop_front(), successCallback);
+    if (
+        ::std::scoped_lock locker{ m_tcpMessagesOut.getMutex() };
+        !m_tcpMessagesOut.lockFreeEmpty()
+    ) {
+        XRN_DEBUG("TCP{} -> Start sending messages", m_id);
+        this->sendTcpMessageHeader(m_tcpMessagesOut.lockFree_pop_front(), successCallback);
+    }
 }
 
 ////////////////////////////////////////////////////////////
@@ -417,7 +485,7 @@ template <
 {
     if (!m_isSendingAllowed) {
         XRN_ERROR(
-            "TCP{}: {}"
+            "TCP{} {}"
             , m_id
             , "Messages are already being sent or the connection cannot send messages"
         );
@@ -457,12 +525,12 @@ template <
             // error handling
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_ERROR("TCP{}: Send canceled", m_id);
+                    XRN_ERROR("TCP{} Send canceled", m_id);
                 } else if (errCode == ::asio::error::eof) {
-                    XRN_ERROR("TCP{}: Connection closed, aborting message sending", m_id);
+                    XRN_LOG("TCP{} Connection closed", m_id);
                     this->disconnect();
                 } else {
-                    XRN_ERROR("TCP{}: Send header failed: {}", m_id, errCode.message());
+                    XRN_ERROR("TCP{} Send header failed: {}", m_id, errCode.message());
                     this->disconnect();
                 }
                 return;
@@ -470,25 +538,40 @@ template <
 
             // if not everything has been sent
             if (bytesAlreadySent + length < message.getHeaderSize()) {
+                XRN_DEBUG(
+                    "TCP{} -> Header not fully sent ({} / {})"
+                    , m_id
+                    , bytesAlreadySent + length
+                    , message.getHeaderSize()
+                );
                 return this->sendTcpMessageHeader(
                     ::std::move(message)
                     , successCallback
                     , bytesAlreadySent + length
                 );
             }
+            XRN_DEBUG("TCP{} -> Header sent", m_id);
+            return successCallback(); // TODO
 
             // send body if present
             if (message.getBodySize()) {
+                XRN_DEBUG("TCP{} -> Header sent", m_id);
                 return this->sendTcpMessageBody(
                     ::std::move(message)
                     , successCallback
                 );
             }
 
+            XRN_DEBUG("TCP{} <- Body is empty", m_id);
             successCallback();
         }
     };
 
+    XRN_DEBUG(
+        "TCP{} -> Request header (size {})"
+        , m_id
+        , message.getHeaderSize() - bytesAlreadySent
+    );
     m_tcpSocket.async_send(
         ::asio::buffer(
             &message.getHeader() + bytesAlreadySent
@@ -513,22 +596,29 @@ template <
             , const ::std::error_code& errCode
             , const ::std::size_t length [[ maybe_unused ]]
         ) {
+
             // error handling
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_ERROR("TCP{}: Send canceled", m_id);
+                    XRN_ERROR("TCP{} Send canceled", m_id);
                 } else if (errCode == ::asio::error::eof) {
-                    XRN_ERROR("TCP{}: Connection closed, aborting message sending", m_id);
+                    XRN_LOG("TCP{} Connection closed", m_id);
                     this->disconnect();
                 } else {
-                    XRN_ERROR("TCP{}: Send header failed: {}", m_id, errCode.message());
+                    XRN_ERROR("TCP{} Send header failed: {}", m_id, errCode.message());
                     this->disconnect();
                 }
                 return;
             }
 
             // if not everything has been sent
-            if (bytesAlreadySent + length < message.getHeaderSize()) {
+            if (bytesAlreadySent + length < message.getBodySize()) {
+                XRN_DEBUG(
+                    "TCP{} -> Body not fully sent ({} / {})"
+                    , m_id
+                    , bytesAlreadySent + length
+                    , message.getBodySize()
+                );
                 return this->sendTcpMessageBody(
                     ::std::move(message)
                     , successCallback
@@ -536,10 +626,16 @@ template <
                 );
             }
 
+            XRN_DEBUG("TCP{} -> Body sent", m_id);
             successCallback();
         }
     };
 
+    XRN_DEBUG(
+        "TCP{} -> Request body (size {})"
+        , m_id
+        , message.getBodySize() - bytesAlreadySent
+    );
     m_tcpSocket.async_send(
         ::asio::buffer(
             &message.getBody() + bytesAlreadySent
@@ -555,8 +651,8 @@ template <
     ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
 )
 {
-    m_tcpBufferInLocker.lock();
-    this->receiveTcpMessageHeader(0, successCallback);
+    // m_tcpBufferInLocker.lock();
+    this->receiveTcpMessageHeader(successCallback, 0);
 }
 
 ////////////////////////////////////////////////////////////
@@ -577,36 +673,59 @@ template <
             // error handling
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_ERROR("TCP{}: Receive canceled", m_id);
+                    XRN_ERROR("TCP{} Receive canceled", m_id);
                 } else if (errCode == ::asio::error::eof) {
-                    XRN_ERROR("TCP{}: Connection closed, aborting message sending", m_id);
                     this->disconnect();
                 } else {
-                    XRN_ERROR("TCP{}: Receive header failed: {}", m_id, errCode.message());
+                    XRN_ERROR("TCP{} Receive header failed: {}", m_id, errCode.message());
                     this->disconnect();
                 }
+                // m_tcpBufferInLocker.unlock();
                 return;
             }
 
+            XRN_DEBUG(
+                "TCP{} <- Is header fully received??? ({} / {})"
+                , m_id
+                , bytesAlreadyReceived + length
+                , m_tcpBufferIn.getHeaderSize()
+            );
             // if not everything has been received
-            if (bytesAlreadyReceived + length < m_tcpMessagesOut.front().getHeaderSize()) {
+            if (bytesAlreadyReceived + length < m_tcpBufferIn.getHeaderSize()) {
+                XRN_DEBUG(
+                    "TCP{} <- Header not fully received ({} / {})"
+                    , m_id
+                    , bytesAlreadyReceived + length
+                    , m_tcpBufferIn.getHeaderSize()
+                );
+                // m_tcpBufferInLocker.unlock();
                 return this->receiveTcpMessageHeader(
                     successCallback, bytesAlreadyReceived + length
                 );
             }
+            XRN_DEBUG("TCP{} <- Header received", m_id);
 
+            m_tcpBufferIn.updateBodySize();
             if (!m_tcpBufferIn.isBodyEmpty()) {
-                m_tcpBufferIn.updateBodySize();
+                XRN_DEBUG("TCP{} <- Header received", m_id);
+                // m_tcpBufferInLocker.unlock();
                 return this->receiveTcpMessageBody(
                     successCallback, bytesAlreadyReceived + length
                 );
             }
 
+            XRN_DEBUG("TCP{} <- Body is empty", m_id);
             // send the message to the queue and start to receive messages again
             successCallback();
-            m_tcpBufferInLocker.unlock();
+            // m_tcpBufferInLocker.unlock();
         }
     };
+
+    XRN_DEBUG(
+        "TCP{} <- Request header (size {})"
+        , m_id
+        , m_tcpBufferIn.getHeaderSize() - bytesAlreadyReceived
+    );
 
     m_tcpSocket.async_receive(
         ::asio::buffer(
@@ -634,30 +753,44 @@ template <
             // error handling
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_ERROR("TCP{}: Receive canceled", m_id);
+                    XRN_ERROR("TCP{} Receive canceled", m_id);
                 } else if (errCode == ::asio::error::eof) {
-                    XRN_ERROR("TCP{}: Connection closed, aborting message sending", m_id);
+                    XRN_LOG("TCP{} Connection closed", m_id);
                     this->disconnect();
                 } else {
-                    XRN_ERROR("TCP{}: Receive header failed: {}", m_id, errCode.message());
+                    XRN_ERROR("TCP{} Receive header failed: {}", m_id, errCode.message());
                     this->disconnect();
                 }
+                // m_tcpBufferInLocker.unlock();
                 return;
             }
 
             // if not everything has been received
-            if (bytesAlreadyReceived + length < m_tcpMessagesOut.front().getBodySize()) {
+            if (bytesAlreadyReceived + length < m_tcpBufferIn.getBodySize()) {
+                XRN_DEBUG(
+                    "TCP{} <- Body not fully received ({} / {})"
+                    , m_id
+                    , bytesAlreadyReceived + length
+                    , m_tcpBufferIn.getBodySize()
+                );
+                // m_tcpBufferInLocker.unlock();
                 return this->receiveTcpMessageBody(successCallback, bytesAlreadyReceived + length);
             }
 
+            XRN_DEBUG("TCP{} <- Body received", m_id);
             successCallback();
-            m_tcpBufferInLocker.unlock();
+            // m_tcpBufferInLocker.unlock();
         }
     };
 
+    XRN_DEBUG(
+        "TCP{} <- Request body (size {})"
+        , m_id
+        , m_tcpBufferIn.getBodySize() - bytesAlreadyReceived
+    );
     m_tcpSocket.async_receive(
         ::asio::buffer(
-            &m_tcpBufferIn.getAddr() + bytesAlreadyReceived
+            &m_tcpBufferIn.getBody() + bytesAlreadyReceived
             , m_tcpBufferIn.getBodySize() - bytesAlreadyReceived
         ), lambda
     );

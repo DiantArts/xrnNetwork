@@ -23,7 +23,8 @@ auto main(
     ::std::string str;
     while (true) {
         ::std::getline(::std::cin, str);
-        if (!client.isConnected()) {
+        if (!client.isRunning()) {
+            XRN_DEBUG("Client is disconnected");
             break;
         } else if (str.size()) {
             if (!::std::strncmp(str.c_str(), "/", 1)) {

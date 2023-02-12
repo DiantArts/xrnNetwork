@@ -72,10 +72,9 @@ template <
     , ::std::uint16_t port
 )
 {
-    m_connection = ::std::make_shared<::xrn::network::Connection<UserEnum>>(
-        host, port, *this
-    );
     this->m_isRunning = true;
+    m_connection = ::std::make_shared<::xrn::network::Connection<UserEnum>>(*this);
+    m_connection->connectToServer(host, port);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -83,9 +82,12 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::client::Client<UserEnum>::disconnect()
 {
-    this->m_isRunning = false;
-    m_connection.reset();
-    XRN_DEBUG("Client disconnected");
+    if (this->m_isRunning) {
+        this->m_isRunning = false;
+        this->notifyIncommingMessageQueue();
+        m_connection.reset();
+        XRN_DEBUG("Client disconnected");
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -96,6 +98,17 @@ template <
 {
     return m_connection && m_connection->isConnected();
 }
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::client::Client<UserEnum>::removeConnection(
+    ::std::shared_ptr<::xrn::network::Connection<UserEnum>> _ [[ maybe_unused ]]
+)
+{
+    this->disconnect();
+}
+
 
 
 
@@ -142,7 +155,7 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::client::Client<UserEnum>::tcpSend(
-    const ::xrn::network::Message<UserEnum>& message
+    ::xrn::network::Message<UserEnum>& message
 )
 {
     m_connection->tcpSend(message);
