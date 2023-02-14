@@ -77,7 +77,7 @@ public:
     enum class SystemType : ::std::uint16_t {
         builtinError = static_cast<::std::uint16_t>(Message::UserType::last) + 1
         , builtinUndefined
-        , builtinNewConnection
+        , builtinUdpInformation
         , builtinPing
         , builtinMessage
         , builtinMessageAll

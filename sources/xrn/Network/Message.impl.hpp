@@ -389,7 +389,7 @@ template <
 > auto ::xrn::network::Message<T>::getTypeAsInt() const
     -> ::std::uint16_t
 {
-    return m_header.packetType;
+    return m_header.messageType;
 }
 
 ///////////////////////////////////////////////////////////////////////////

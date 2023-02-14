@@ -8,14 +8,26 @@
 ///////////////////////////////////////////////////////////////////////////
 #include <Example/Client.hpp>
 
+auto getPort()
+    -> ::std::uint16_t
+{
+    return 6;
+}
+
 ///////////////////////////////////////////////////////////////////////////
 auto main(
     int argc
     , char** argv
 ) -> int
 {
-    // ::xrn::network::Message<::example::MessageType> message{ ::example::MessageType::message };
-    // message.push(9);
+    // ::xrn::network::Message<::example::MessageType> message{
+        // ::example::MessageType::message
+        // , ::xrn::network::Message<::example::MessageType>::ProtocolType::tcp
+        // , ::getPort()
+    // };
+    // message.push(::getPort());
+    // auto port{ message.template pull<::std::uint16_t>() };
+    // ::fmt::print("{}\n", port);
     // return 0;
     XRN_FATAL_SASSERT(argc == 3, "Usage: client <host> {}", argc);
     ::example::Client client{
