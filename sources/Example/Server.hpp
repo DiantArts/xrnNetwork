@@ -23,13 +23,12 @@ public:
     ) override
     {
         switch (message.getType()) {
-            case ::example::MessageType::message: {
-                auto str{ message.pull<::std::string>() };
-                ::fmt::print("<- C{}: {}\n", connection->getId(), str);
-                connection->tcpSend(message);
+        default: {
+            auto str{ message.pull<::std::string>() };
+            ::fmt::print("<- C{}: '{}'\n", connection->getId(), str);
+            this->tcpSendToAll(message);
             break;
-        } default: break;
-        }
+        }}
     }
 };
 

@@ -40,11 +40,10 @@ public:
     ) override
     {
         switch (message.getType()) {
-            case ::example::MessageType::message: {
-                ::fmt::print("<- C{}: {}\n", connection->getId(), message.pull<::std::string>());
-            break;
-        } default: break;
-        }
+        default: {
+            ::fmt::print("<- C{}: '{}'\n", connection->getId(), message.pull<::std::string>());
+        break;
+        }}
     }
 };
 

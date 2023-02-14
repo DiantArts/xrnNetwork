@@ -12,12 +12,11 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > ::xrn::network::OwnedMessage<UserEnum>::OwnedMessage(
     ::std::shared_ptr<::xrn::network::Connection<UserEnum>> owner
-    , auto&&... args
+    , ::std::unique_ptr<::xrn::network::Message<UserEnum>>&& message
 ) noexcept
-    : ::xrn::network::Message<UserEnum>{ ::std::forward<decltype(args)>(args)... }
-    , m_owner{ owner }
-{
-}
+    : m_message{ ::std::move(message) }
+    , m_owner{ ::std::move(owner) }
+{}
 
 
 
@@ -35,4 +34,13 @@ template <
     -> ::std::shared_ptr<::xrn::network::Connection<UserEnum>>
 {
     return m_owner;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::OwnedMessage<UserEnum>::getMessage()
+    -> ::std::unique_ptr<::xrn::network::Message<UserEnum>>&
+{
+    return m_message;
 }

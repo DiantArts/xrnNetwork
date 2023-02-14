@@ -14,7 +14,10 @@ auto main(
     , char** argv
 ) -> int
 {
-    XRN_FATAL_ASSERT(argc == 3, "Usage: client <host> {}", argc);
+    // ::xrn::network::Message<::example::MessageType> message{ ::example::MessageType::message };
+    // message.push(9);
+    // return 0;
+    XRN_FATAL_SASSERT(argc == 3, "Usage: client <host> {}", argc);
     ::example::Client client{
         argv[1],
         static_cast<::std::uint16_t>(::std::atoi(argv[2]))

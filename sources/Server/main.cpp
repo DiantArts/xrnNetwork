@@ -14,7 +14,7 @@ auto main(
     , char** argv
 ) -> int
 {
-    XRN_FATAL_ASSERT(argc == 2, "Usage: server <host>");
+    XRN_FATAL_SASSERT(argc == 2, "Usage: server <host>");
 
     ::example::Server server{ static_cast<::std::uint16_t>(::std::atoi(argv[1])) };
 

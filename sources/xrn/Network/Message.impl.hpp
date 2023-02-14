@@ -79,7 +79,7 @@ template <
     , auto&&... args
 ) noexcept
     : m_header{
-        .bodySize = (Message::getSize(::std::forward<decltype(args)>(args)) + ...)
+        .bodySize = (Message::getSizeOfArg(::std::forward<decltype(args)>(args)) + ...)
         , .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
     }, m_body{ m_header.bodySize }
     , m_index{ 0 }
@@ -87,6 +87,53 @@ template <
 {
     this->pushMemory(0, ::std::forward<decltype(args)>(args)...);
 }
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Rule of 5
+//
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
+> ::xrn::network::Message<T>::~Message()
+{
+    XRN_DEBUG("Message deleted");
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
+> inline ::xrn::network::Message<T>::Message(
+    const Message& that
+) noexcept = default;
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
+> inline auto ::xrn::network::Message<T>::operator=(
+    const Message& that
+) noexcept
+    -> Message& = default;
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
+> inline ::xrn::network::Message<T>::Message(
+    Message&& that
+) noexcept = default;
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum T
+> inline auto ::xrn::network::Message<T>::operator=(
+    Message&& that
+) noexcept
+    -> Message& = default;
 
 
 
@@ -104,9 +151,10 @@ template <
     auto&&... args
 )
 {
-    const auto size{ (Message::getSize(::std::forward<decltype(args)>(args)) + ...) };
+    const auto size{ (Message::getSizeOfArg(::std::forward<decltype(args)>(args)) + ...) };
     const auto oldSize{ m_body.size() };
     m_body.resize(oldSize + size);
+    m_header.bodySize = m_body.size();
     pushMemory(oldSize, ::std::forward<decltype(args)>(args)...);
 }
 
@@ -120,6 +168,7 @@ template <
     const auto size{ (args.size() + ...) };
     const auto oldSize{ m_body.size() };
     m_body.resize(oldSize + size);
+    m_header.bodySize = m_body.size();
     pushMemory(oldSize, ::std::forward<decltype(args)>(args)...);
 }
 
@@ -230,9 +279,9 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum T
 > auto ::xrn::network::Message<T>::getBodyAddr()
-    -> void*
+    -> ::std::byte*
 {
-    return m_body.data();
+    return static_cast<::std::byte*>(m_body.data());
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -257,9 +306,9 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum T
 > auto ::xrn::network::Message<T>::getHeaderAddr()
-    -> void*
+    -> ::std::byte*
 {
-    return &m_header;
+    return ::std::bit_cast<::std::byte*>(&m_header);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -374,9 +423,9 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum T
-> constexpr auto ::xrn::network::Message<T>::getSize(
+> constexpr auto ::xrn::network::Message<T>::getSizeOfArg(
     auto&& arg
-) -> ::std::size_t
+) -> decltype(Message::Header::bodySize)
 {
     return sizeof(arg);
 }
@@ -384,9 +433,9 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum T
-> constexpr auto ::xrn::network::Message<T>::getSize(
+> constexpr auto ::xrn::network::Message<T>::getSizeOfArg(
     const char *const arg
-) -> ::std::size_t
+) -> decltype(Message::Header::bodySize)
 {
     return sizeof(Message::SizeType) + (sizeof(char) * ::std::strlen(arg));
 }
@@ -394,11 +443,12 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum T
-> constexpr auto ::xrn::network::Message<T>::getSize(
+> constexpr auto ::xrn::network::Message<T>::getSizeOfArg(
     ::xrn::meta::constraint::isContiguousContainer auto&& arg
-) -> ::std::size_t
+) -> decltype(Message::Header::bodySize)
 {
-    return sizeof(Message::SizeType) + (sizeof(arg.at(0)) * arg.size());
+    return static_cast<decltype(Message::Header::bodySize)>(sizeof(Message::SizeType)) +
+        static_cast<decltype(Message::Header::bodySize)>(sizeof(arg.at(0)) * arg.size());
 }
 
 
@@ -419,7 +469,7 @@ template <
     , auto&&... args
 )
 {
-    const auto size{ Message::getSize(arg) };
+    const auto size{ Message::getSizeOfArg(arg) };
     this->pushSingleMemory(index, ::std::forward<decltype(arg)>(arg));
     if constexpr (sizeof...(args)) {
         pushMemory(index + size, ::std::forward<decltype(args)>(args)...);

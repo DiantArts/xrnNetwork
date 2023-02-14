@@ -114,7 +114,7 @@ using ::std::chrono_literals::operator""ms;
 #define ASIO_STANDALONE
 #include <asio.hpp>
 
-#define PRINT_DEBUG
+#define NO_DEBUG
 #include <xrn/Log.hpp>
 #include <xrn/Meta.hpp>
 #include <xrn/Util.hpp>

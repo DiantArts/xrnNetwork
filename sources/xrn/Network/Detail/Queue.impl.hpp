@@ -22,7 +22,9 @@ template <
 > auto ::xrn::network::detail::Queue<Type>::front() const
     -> const Type&
 {
+    XRN_DEBUG("locking");
     ::std::scoped_lock lock{ m_mutexQueue };
+    XRN_DEBUG("unlocking");
     return m_deque.front();
 }
 
@@ -31,7 +33,9 @@ template <
 > auto ::xrn::network::detail::Queue<Type>::front()
     -> Type&
 {
+    XRN_DEBUG("locking");
     ::std::scoped_lock lock{ m_mutexQueue };
+    XRN_DEBUG("unlocking");
     return m_deque.front();
 }
 
@@ -42,8 +46,10 @@ template <
 )
 {
     {
+        XRN_DEBUG("locking");
         ::std::scoped_lock lock{ m_mutexQueue };
         m_deque.emplace_front(::std::move(item));
+        XRN_DEBUG("unlocking");
     }
 
     this->notify();
@@ -54,9 +60,11 @@ template <
 > auto ::xrn::network::detail::Queue<Type>::pop_front()
     -> Type
 {
+    XRN_DEBUG("locking");
     ::std::scoped_lock lock{ m_mutexQueue };
     auto tmpValue{ ::std::move(m_deque.front()) };
     m_deque.pop_front();
+    XRN_DEBUG("unlocking");
     return tmpValue;
 }
 
@@ -74,7 +82,9 @@ template <
     typename Type
 > void ::xrn::network::detail::Queue<Type>::remove_front()
 {
+    XRN_DEBUG("locking");
     ::std::scoped_lock lock{ m_mutexQueue };
+    XRN_DEBUG("unlocking");
     m_deque.pop_front();
 }
 
@@ -87,7 +97,9 @@ template <
 > auto ::xrn::network::detail::Queue<Type>::back() const
     -> const Type&
 {
+    XRN_DEBUG("locking");
     ::std::scoped_lock lock{ m_mutexQueue };
+    XRN_DEBUG("unlocking");
     return m_deque.back();
 }
 
@@ -96,7 +108,9 @@ template <
 > auto ::xrn::network::detail::Queue<Type>::back()
     -> Type&
 {
+    XRN_DEBUG("locking");
     ::std::scoped_lock lock{ m_mutexQueue };
+    XRN_DEBUG("unlocking");
     return m_deque.back();
 }
 
@@ -107,8 +121,10 @@ template <
 )
 {
     {
+        XRN_DEBUG("locking");
         ::std::scoped_lock lock{ m_mutexQueue };
         m_deque.emplace_back(::std::move(item));
+        XRN_DEBUG("unlocking");
     }
 
     this->notify();
@@ -119,9 +135,11 @@ template <
 > auto ::xrn::network::detail::Queue<Type>::pop_back()
     -> Type
 {
+    XRN_DEBUG("locking");
     ::std::scoped_lock lock{ m_mutexQueue };
     auto tmpValue{ ::std::move(m_deque.back()) };
     m_deque.pop_back();
+    XRN_DEBUG("unlocking");
     return tmpValue;
 }
 
@@ -129,8 +147,10 @@ template <
     typename Type
 > void ::xrn::network::detail::Queue<Type>::remove_back()
 {
+    XRN_DEBUG("locking");
     ::std::scoped_lock lock{ m_mutexQueue };
     m_deque.pop_back();
+    XRN_DEBUG("unlocking");
 }
 
 
@@ -142,7 +162,9 @@ template <
 > auto ::xrn::network::detail::Queue<Type>::empty() const
     -> bool
 {
+    XRN_DEBUG("locking");
     ::std::scoped_lock lock{ m_mutexQueue };
+    XRN_DEBUG("unlocking");
     return m_deque.empty();
 }
 
@@ -159,7 +181,9 @@ template <
 > auto ::xrn::network::detail::Queue<Type>::count() const
     -> ::std::size_t
 {
+    XRN_DEBUG("locking");
     ::std::scoped_lock lock{ m_mutexQueue };
+    XRN_DEBUG("unlocking");
     return m_deque.size();
 }
 
@@ -175,8 +199,10 @@ template <
     typename Type
 > void ::xrn::network::detail::Queue<Type>::clear()
 {
+    XRN_DEBUG("locking");
     ::std::scoped_lock lock{ m_mutexQueue };
     m_deque.clear();
+    XRN_DEBUG("unlocking");
 }
 
 

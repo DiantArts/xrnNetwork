@@ -43,7 +43,6 @@ namespace xrn::network {
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > class OwnedMessage
-    : public ::xrn::network::Message<UserEnum>
 {
 
 public:
@@ -69,7 +68,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     explicit OwnedMessage(
         ::std::shared_ptr<::xrn::network::Connection<UserEnum>> owner
-        , auto&&... args
+        , ::std::unique_ptr<::xrn::network::Message<UserEnum>>&& message
     ) noexcept;
 
 
@@ -88,6 +87,13 @@ public:
     [[ nodiscard ]] auto getOwner()
         -> ::std::shared_ptr<::xrn::network::Connection<UserEnum>>;
 
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Get the sender of the message[
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    [[ nodiscard ]] auto getMessage()
+        -> ::std::unique_ptr<::xrn::network::Message<UserEnum>>&;
+
 
 
 
@@ -99,6 +105,12 @@ private:
     //
     ///////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Contains the message
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    ::std::unique_ptr<::xrn::network::Message<UserEnum>> m_message;
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Contains information about the content of the body

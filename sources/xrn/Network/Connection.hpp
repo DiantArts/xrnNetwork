@@ -215,17 +215,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void blockingTcpSend(
-        const ::xrn::network::Message<UserEnum>& message
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send a tcp message and block the execution till it is sent
-    ///
-    /// \param message Rvalue reference to the message to send
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    void blockingTcpSend(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
     );
 
     ///////////////////////////////////////////////////////////////////////////
@@ -345,7 +335,7 @@ private:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void transferInMessageToOwner(
-        const ::xrn::network::Message<UserEnum>& buffer
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
     );
 
 
@@ -394,7 +384,7 @@ private:
     //
     ///////////////////////////////////////////////////////////////////////////
     void sendNonQueuedTcpMessage(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
         , ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
     );
 
@@ -410,7 +400,7 @@ private:
     //
     ///////////////////////////////////////////////////////////////////////////
     void forceSendNonQueuedTcpMessage(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
         , ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
     );
 
@@ -425,7 +415,7 @@ private:
     //
     ///////////////////////////////////////////////////////////////////////////
     void sendTcpMessageHeader(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
         , ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
         , ::std::size_t bytesAlreadySent = 0
     );
@@ -441,7 +431,7 @@ private:
     //
     ///////////////////////////////////////////////////////////////////////////
     void sendTcpMessageBody(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
         , ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
         , ::std::size_t bytesAlreadySent = 0
     );
@@ -535,7 +525,7 @@ private:
     ///////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////////////////////////
+    /////////////UserEnum//////////////////////////////////////////////////////////////
     /// \brief Asio socket representing the socket for tcp communication
     ///
     ///////////////////////////////////////////////////////////////////////////
@@ -548,7 +538,7 @@ private:
     /// transferInMessageToOwner()
     ///
     ///////////////////////////////////////////////////////////////////////////
-    ::xrn::network::Message<UserEnum> m_tcpBufferIn;
+    ::std::unique_ptr<::xrn::network::Message<UserEnum>> m_tcpBufferIn;
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Lock the access of the buffer allowing messages to be received
@@ -560,7 +550,9 @@ private:
     /// \brief Queue of all the tcp messages about to be sent
     ///
     ///////////////////////////////////////////////////////////////////////////
-    ::xrn::network::detail::Queue<::xrn::network::Message<UserEnum>> m_tcpMessagesOut;
+    ::xrn::network::detail::Queue<::std::unique_ptr<
+        ::xrn::network::Message<UserEnum>
+    >> m_tcpMessagesOut;
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Signals that messages are currenly being sent
@@ -590,7 +582,7 @@ private:
     /// transferInMessageToOwner()
     ///
     ///////////////////////////////////////////////////////////////////////////
-    ::xrn::network::Message<UserEnum> m_udpBufferIn;
+    ::std::unique_ptr<::xrn::network::Message<UserEnum>> m_udpBufferIn;
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Lock the access of the buffer allowing messages to be received
@@ -602,7 +594,9 @@ private:
     /// \brief Queue of all the udp messages about to be sent
     ///
     ///////////////////////////////////////////////////////////////////////////
-    ::xrn::network::detail::Queue<::xrn::network::Message<UserEnum>> m_udpMessagesOut;
+    ::xrn::network::detail::Queue<::std::unique_ptr<
+        ::xrn::network::Message<UserEnum>
+    >> m_udpMessagesOut;
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Signals that messages are currenly being sent

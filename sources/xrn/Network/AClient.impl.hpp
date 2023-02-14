@@ -91,9 +91,10 @@ template <
 > void ::xrn::network::AClient<UserEnum>::pullIncommingMessage()
 {
     auto message{ m_messagesIn.pop_front() };
-    if (!this->handleIncommingSystemMessages(message.getOwner(), message)) {
-        this->onReceive(message, message.getOwner());
+    if (this->handleIncommingSystemMessages(message->getOwner(), *message->getMessage())) {
+        return;
     }
+    this->onReceive(*message->getMessage(), message->getOwner());
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -128,12 +129,12 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::AClient<UserEnum>::pushIncommingMessage(
     ::std::shared_ptr<::xrn::network::Connection<UserEnum>> connection
-    , ::xrn::network::Message<UserEnum> message
+    , ::std::unique_ptr<::xrn::network::Message<UserEnum>>&& message
 )
 {
-    m_messagesIn.push_back(
-        ::xrn::network::OwnedMessage<UserEnum>{ connection, ::std::move(message) }
-    );
+    m_messagesIn.push_back(::std::make_unique<::xrn::network::OwnedMessage<UserEnum>>(
+        connection, ::std::move(message)
+    ));
 }
 
 

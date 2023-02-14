@@ -93,6 +93,7 @@ template <
 {
     this->m_isRunning = true;
     this->startReceivingConnections();
+    XRN_LOG("Server started");
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -119,7 +120,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::send(
+> void ::xrn::network::server::Server<UserEnum>::tcpSend(
     ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
         ::xrn::network::Connection<UserEnum>
@@ -127,21 +128,21 @@ template <
 )
 {
     for (auto& client : { clients... }) {
-        client->send(message);
+        client->tcpSend(message);
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::send(
+> void ::xrn::network::server::Server<UserEnum>::tcpSend(
     ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... clients
 )
 {
     for (auto& client : m_connections) {
         if (((client == clients) || ...)) {
-            client->send(message);
+            client->tcpSend(message);
         }
     }
 }
@@ -149,7 +150,19 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::sendToAll(
+> void ::xrn::network::server::Server<UserEnum>::tcpSendToAll(
+    ::xrn::network::Message<UserEnum>& message
+)
+{
+    for (auto& client : m_connections) {
+        client->tcpSend(message);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::server::Server<UserEnum>::tcpSendToAll(
     ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
         ::xrn::network::Connection<UserEnum>
@@ -158,7 +171,7 @@ template <
 {
     for (auto& client : m_connections) {
         if (((client.getId()() != ignoredClients) && ...)) {
-            client->send(message);
+            client->tcpSend(message);
         }
     }
 }
@@ -166,14 +179,14 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::sendToAll(
+> void ::xrn::network::server::Server<UserEnum>::tcpSendToAll(
     ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... ignoredClients
 )
 {
     for (auto& client : m_connections) {
         if (((client != ignoredClients) && ...)) {
-            client->send(message);
+            client->tcpSend(message);
         }
     }
 }
@@ -192,7 +205,6 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::server::Server<UserEnum>::startReceivingConnections()
 {
-    XRN_DEBUG();
     m_connectionAcceptor.async_accept(
         [this](
             const ::std::error_code& errCode,
