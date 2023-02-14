@@ -15,11 +15,16 @@ auto getPort()
 }
 
 ///////////////////////////////////////////////////////////////////////////
-auto main(
-    int argc
-    , char** argv
-) -> int
-{
+// auto main()
+    // -> int
+// {
+    // auto messagePtr{ ::std::make_unique<::xrn::network::Message<::example::MessageType>>(
+        // ::xrn::network::Message<::example::MessageType>::SystemType::builtinUdpInformation
+        // , ::xrn::network::Message<::example::MessageType>::ProtocolType::tcp
+        // , ::getPort()
+    // )};
+    // auto port{ messagePtr->template pull<::std::uint16_t>() };
+
     // ::xrn::network::Message<::example::MessageType> message{
         // ::example::MessageType::message
         // , ::xrn::network::Message<::example::MessageType>::ProtocolType::tcp
@@ -27,8 +32,16 @@ auto main(
     // };
     // message.push(::getPort());
     // auto port{ message.template pull<::std::uint16_t>() };
+
     // ::fmt::print("{}\n", port);
     // return 0;
+// }
+
+auto main(
+    int argc
+    , char** argv
+) -> int
+{
     XRN_FATAL_SASSERT(argc == 3, "Usage: client <host> {}", argc);
     ::example::Client client{
         argv[1],

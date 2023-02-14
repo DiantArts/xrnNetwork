@@ -24,6 +24,8 @@ template <
         )
     }
 {
+    m_udpSocket.open(::asio::ip::udp::v4());
+    m_udpSocket.bind(::asio::ip::udp::endpoint(::asio::ip::udp::v4(), 0));
     XRN_DEBUG("C{} Created", m_id);
 }
 
@@ -47,6 +49,8 @@ template <
         )
     }
 {
+    m_udpSocket.open(::asio::ip::udp::v4());
+    m_udpSocket.bind(::asio::ip::udp::endpoint(::asio::ip::udp::v4(), 0));
     XRN_DEBUG("C{} Created", m_id);
 }
 
@@ -106,9 +110,7 @@ template <
     }
 
     XRN_LOG("TCP{} Connection accepted", m_id);
-    this->startReceivingTcpMessage();
-    m_isTcpSendingAllowed = true;
-    // this->retrieveUdpInformation();
+    this->retrieveUdpInformation();
 }
 
 ////////////////////////////////////////////////////////////
@@ -119,7 +121,7 @@ template <
     , const ::std::uint16_t port
 )
 {
-    XRN_LOG("TCP{} request connection to server {}:{}", m_id, host, port);
+    XRN_LOG("TCP{} -> Request connection to server {}:{}", m_id, host, port);
     m_tcpSocket.async_connect(
         ::asio::ip::tcp::endpoint{ ::asio::ip::address::from_string(host), port }
         , [this, &host = host, port](
@@ -141,13 +143,14 @@ template <
             }
 
             if (!m_owner.onConnect(this->shared_from_this())) {
+                XRN_LOG("TCP{} Connection refused (onConnect)", m_id);
                 return this->disconnect();
             }
 
             XRN_LOG("TCP{} Connection accepted", m_id);
             this->startReceivingTcpMessage();
             m_isTcpSendingAllowed = true;
-            // this->retrieveUdpInformation();
+            this->retrieveUdpInformation();
         }
     );
 }
@@ -290,7 +293,7 @@ template <
             m_tcpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>(
                 ::xrn::network::Message<UserEnum>::ProtocolType::tcp
             );
-            m_tcpBufferInLocker.unlock();
+            // m_tcpBufferInLocker.unlock();
             this->startReceivingTcpMessage();
         }
     );
@@ -310,14 +313,14 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::Connection<UserEnum>::retrieveUdpInformation()
 {
-    XRN_LOG("TCP{} request udp information of the server", m_id);
+    XRN_LOG("TCP{} -> Request udp information of the server", m_id);
 
     // send udp informations
     this->forceSendNonQueuedTcpMessage(
         ::std::make_unique<::xrn::network::Message<UserEnum>>(
             ::xrn::network::Message<UserEnum>::SystemType::builtinUdpInformation
-            , ::xrn::network::Message<UserEnum>::ProtocolType::tcp
-            , this->getPort()
+            , ::xrn::network::Message<UserEnum>::ProtocolType::tcp // sent by tcp
+            , m_udpSocket.local_endpoint().port()
         )
         , [](){}
     );
@@ -350,7 +353,8 @@ template <
     , const ::std::uint16_t port
 )
 {
-    XRN_LOG("UDP{} request connection to server {}:{}", m_id, host, port);
+    XRN_LOG("UDP{} Request connection to server {}:{}", m_id, host, port);
+
     m_udpSocket.async_connect(
         ::asio::ip::udp::endpoint{ ::asio::ip::address::from_string(host), port },
         [=](const ::std::error_code& errCode) {
@@ -369,6 +373,8 @@ template <
 
             XRN_LOG("UDP{} Connection accepted", m_id);
             m_isUdpSendingAllowed = true;
+            this->startReceivingTcpMessage();
+            m_isTcpSendingAllowed = true;
         }
     );
 }
@@ -655,7 +661,7 @@ template <
     ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
 )
 {
-    m_tcpBufferInLocker.lock();
+    // m_tcpBufferInLocker.lock();
     this->receiveTcpMessageHeader(successCallback, 0);
 }
 
@@ -683,7 +689,7 @@ template <
                     XRN_ERROR("TCP{} Receive header failed: {}", m_id, errCode.message());
                     this->disconnect();
                 }
-                m_tcpBufferInLocker.unlock();
+                // m_tcpBufferInLocker.unlock();
                 return;
             }
 
@@ -695,7 +701,7 @@ template <
                     , bytesAlreadyReceived + length
                     , m_tcpBufferIn->getHeaderSize()
                 );
-                m_tcpBufferInLocker.unlock();
+                // m_tcpBufferInLocker.unlock();
                 return this->receiveTcpMessageHeader(
                     successCallback, bytesAlreadyReceived + length
                 );
@@ -704,14 +710,14 @@ template <
             m_tcpBufferIn->updateBodySize();
             if (!m_tcpBufferIn->isBodyEmpty()) {
                 XRN_DEBUG("TCP{} <- Header received", m_id);
-                m_tcpBufferInLocker.unlock();
+                // m_tcpBufferInLocker.unlock();
                 return this->receiveTcpMessageBody(successCallback);
             }
 
             XRN_DEBUG("TCP{} <- Body is empty", m_id);
             // send the message to the queue and start to receive messages again
             successCallback();
-            m_tcpBufferInLocker.unlock();
+            // m_tcpBufferInLocker.unlock();
         }
     };
 
@@ -756,7 +762,7 @@ template <
                     XRN_ERROR("TCP{} Receive header failed: {}", m_id, errCode.message());
                     this->disconnect();
                 }
-                m_tcpBufferInLocker.unlock();
+                // m_tcpBufferInLocker.unlock();
                 return;
             }
 
@@ -774,13 +780,13 @@ template <
                     , bytesAlreadyReceived + length
                     , m_tcpBufferIn->getBodySize()
                 );
-                m_tcpBufferInLocker.unlock();
+                // m_tcpBufferInLocker.unlock();
                 return this->receiveTcpMessageBody(successCallback, bytesAlreadyReceived + length);
             }
 
             XRN_DEBUG("TCP{} <- Body received", m_id);
             successCallback();
-            m_tcpBufferInLocker.unlock();
+            // m_tcpBufferInLocker.unlock();
         }
     };
 

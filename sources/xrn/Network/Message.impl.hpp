@@ -60,7 +60,7 @@ template <
     , auto&&... args
 ) noexcept
     : m_header{
-        .bodySize = 0
+        .bodySize = (Message::getSizeOfArg(::std::forward<decltype(args)>(args)) + ...)
         , .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
     }
     , m_body{ m_header.bodySize }
@@ -154,7 +154,7 @@ template <
     const auto size{ (Message::getSizeOfArg(::std::forward<decltype(args)>(args)) + ...) };
     const auto oldSize{ m_body.size() };
     m_body.resize(oldSize + size);
-    m_header.bodySize = m_body.size();
+    m_header.bodySize = static_cast<decltype(m_header.bodySize)>(m_body.size());
     pushMemory(oldSize, ::std::forward<decltype(args)>(args)...);
 }
 
