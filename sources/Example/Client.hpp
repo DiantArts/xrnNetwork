@@ -31,7 +31,7 @@ public:
         const ::std::string& message
     )
     {
-        this->tcpSend(::example::MessageType::messageAll, message);
+        this->udpSend(::example::MessageType::messageAll, message);
     }
 
     virtual void onReceive(

@@ -112,7 +112,7 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// Run managment
+// Tcp
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -187,6 +187,89 @@ template <
     for (auto& client : m_connections) {
         if (((client != ignoredClients) && ...)) {
             client->tcpSend(message);
+        }
+    }
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Udp
+//
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::server::Server<UserEnum>::udpSend(
+    ::xrn::network::Message<UserEnum>& message
+    , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
+        ::xrn::network::Connection<UserEnum>
+    >> auto... clients
+)
+{
+    for (auto& client : { clients... }) {
+        client->udpSend(message);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::server::Server<UserEnum>::udpSend(
+    ::xrn::network::Message<UserEnum>& message
+    , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... clients
+)
+{
+    for (auto& client : m_connections) {
+        if (((client == clients) || ...)) {
+            client->udpSend(message);
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::server::Server<UserEnum>::udpSendToAll(
+    ::xrn::network::Message<UserEnum>& message
+)
+{
+    for (auto& client : m_connections) {
+        client->udpSend(message);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::server::Server<UserEnum>::udpSendToAll(
+    ::xrn::network::Message<UserEnum>& message
+    , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
+        ::xrn::network::Connection<UserEnum>
+    >> auto... ignoredClients
+)
+{
+    for (auto& client : m_connections) {
+        if (((client.getId()() != ignoredClients) && ...)) {
+            client->udpSend(message);
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::server::Server<UserEnum>::udpSendToAll(
+    ::xrn::network::Message<UserEnum>& message
+    , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... ignoredClients
+)
+{
+    for (auto& client : m_connections) {
+        if (((client != ignoredClients) && ...)) {
+            client->udpSend(message);
         }
     }
 }

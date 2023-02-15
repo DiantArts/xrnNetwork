@@ -175,6 +175,7 @@ template <
 
 
 
+
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // Udp
@@ -192,9 +193,10 @@ template <
 {
     m_connection->udpSend(
         ::xrn::network::Message<UserEnum>{
-        messageType
-        , ::xrn::network::Message<UserEnum>::ProtocolType::udp
-        , ::std::forward<decltype(args)>(args)... }
+            messageType
+            , ::xrn::network::Message<UserEnum>::ProtocolType::udp
+            , ::std::forward<decltype(args)>(args)...
+        }
     );
 }
 
@@ -208,9 +210,10 @@ template <
 {
     m_connection->udpSend(
         ::xrn::network::Message<UserEnum>{
-        messageType
-        , ::xrn::network::Message<UserEnum>::ProtocolType::udp
-        , ::std::forward<decltype(args)>(args)... }
+            messageType
+            , ::xrn::network::Message<UserEnum>::ProtocolType::udp
+            , ::std::forward<decltype(args)>(args)...
+        }
     );
 }
 
@@ -218,7 +221,7 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::client::Client<UserEnum>::udpSend(
-    const ::xrn::network::Message<UserEnum>& message
+    ::xrn::network::Message<UserEnum>& message
 )
 {
     m_connection->udpSend(message);
