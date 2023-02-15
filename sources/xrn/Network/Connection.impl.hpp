@@ -148,8 +148,6 @@ template <
             }
 
             XRN_LOG("TCP{} Connection accepted", m_id);
-            this->startReceivingTcpMessage();
-            m_isTcpSendingAllowed = true;
             this->retrieveUdpInformation();
         }
     );
@@ -293,6 +291,7 @@ template <
             m_tcpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>(
                 ::xrn::network::Message<UserEnum>::ProtocolType::tcp
             );
+
             // m_tcpBufferInLocker.unlock();
             this->startReceivingTcpMessage();
         }
@@ -326,23 +325,31 @@ template <
     );
 
     // receive the udp information
-    this->receiveTcpMessage([this](){
-        if (
-            m_tcpBufferIn->getTypeAsSystemType() !=
-            ::xrn::network::Message<UserEnum>::SystemType::builtinUdpInformation
-        ) {
-            XRN_ERROR(
-                "UDP{}: Failed to setup UDP (unexpected message received {})"
-                , m_id
-                , m_tcpBufferIn->getTypeAsInt()
-            );
-            this->disconnect();
-            return;
-        }
+    this->receiveTcpMessage(
+        [this](){
+            if (
+                m_tcpBufferIn->getTypeAsSystemType() !=
+                ::xrn::network::Message<UserEnum>::SystemType::builtinUdpInformation
+            ) {
+                XRN_ERROR(
+                    "TCP{}: Failed to setup UDP (unexpected message received {})"
+                    , m_id
+                    , m_tcpBufferIn->getTypeAsInt()
+                );
+                this->disconnect();
+                return;
+            }
+            XRN_DEBUG("TCP{}: UDP information received", m_id);
+            auto port{ m_tcpBufferIn->template pull<::std::uint16_t>() };
 
-        auto port{ m_tcpBufferIn->template pull<::std::uint16_t>() };
-        this->setUdpTarget(this->getAddress(), port);
-    });
+            // recreate a buffer
+            m_tcpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>(
+                ::xrn::network::Message<UserEnum>::ProtocolType::tcp
+            );
+
+            this->setUdpTarget(this->getAddress(), port);
+        }
+    );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -372,9 +379,14 @@ template <
             }
 
             XRN_LOG("UDP{} Connection accepted", m_id);
-            m_isUdpSendingAllowed = true;
-            this->startReceivingTcpMessage();
-            m_isTcpSendingAllowed = true;
+            ::asio::post(
+                m_owner.getAsioContext()
+                , [this]() {
+                    m_isUdpSendingAllowed = true;
+                    this->startReceivingTcpMessage();
+                    m_isTcpSendingAllowed = true;
+                }
+            );
         }
     );
 }

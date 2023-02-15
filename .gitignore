@@ -19,3 +19,4 @@ cccontrolReminder
 TODO
 compile_commands.json
 .logs/
+vgcore.*
