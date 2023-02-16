@@ -24,11 +24,32 @@ public:
     {
         switch (message.getType()) {
         default: {
-            auto str{ message.pull<::std::string>() };
-            ::fmt::print("<- C{}: '{}'\n", connection->getId(), str);
-            this->tcpSendToAll(message);
+            ::fmt::print(
+                "<- C{} '{}'\n"
+                , message.pull<::xrn::Id>()
+                , message.pull<::std::string>()
+            );
+            this->tcpSendToAll(message, connection);
             break;
         }}
+    }
+
+    virtual auto onSend(
+        ::xrn::network::Message<::example::MessageType>& message,
+        ::std::shared_ptr<::xrn::network::Connection<::example::MessageType>> connection
+    ) -> bool override
+    {
+        switch (message.getType()) {
+        default: {
+            ::fmt::print(
+                "C{} -> C{} '{}'\n"
+                , message.pull<::xrn::Id>()
+                , connection->getId()
+                , message.pull<::std::string>()
+            );
+            break;
+        }}
+        return true;
     }
 };
 

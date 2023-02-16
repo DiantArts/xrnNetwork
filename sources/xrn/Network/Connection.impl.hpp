@@ -13,16 +13,9 @@ template <
 )
     : m_owner{ owner }
     , m_tcpSocket{ m_owner.getAsioContext() }
-    , m_tcpBufferIn{
-        ::std::make_unique<::xrn::network::Message<UserEnum>>(
-            ::xrn::network::Message<UserEnum>::ProtocolType::tcp
-        )
-    }, m_udpSocket{ m_owner.getAsioContext() }
-    , m_udpBufferIn{
-        ::std::make_unique<::xrn::network::Message<UserEnum>>(
-            ::xrn::network::Message<UserEnum>::ProtocolType::udp
-        )
-    }
+    , m_tcpBufferIn{ ::std::make_unique<::xrn::network::Message<UserEnum>>() }
+    , m_udpSocket{ m_owner.getAsioContext() }
+    , m_udpBufferIn{ ::std::make_unique<::xrn::network::Message<UserEnum>>() }
 {
     m_udpSocket.open(::asio::ip::udp::v4());
     m_udpSocket.bind(::asio::ip::udp::endpoint(::asio::ip::udp::v4(), 0));
@@ -35,19 +28,14 @@ template <
 > ::xrn::network::Connection<UserEnum>::Connection(
     ::asio::ip::tcp::socket&& socket
     , ::xrn::network::AClient<UserEnum>& owner
+    , ::xrn::Id clientId
 )
     : m_owner{ owner }
+    , m_id{ clientId }
     , m_tcpSocket{ ::std::move(socket) }
-    , m_tcpBufferIn{
-        ::std::make_unique<::xrn::network::Message<UserEnum>>(
-            ::xrn::network::Message<UserEnum>::ProtocolType::tcp
-        )
-    }, m_udpSocket{ m_owner.getAsioContext() }
-    , m_udpBufferIn{
-        ::std::make_unique<::xrn::network::Message<UserEnum>>(
-            ::xrn::network::Message<UserEnum>::ProtocolType::udp
-        )
-    }
+    , m_tcpBufferIn{ ::std::make_unique<::xrn::network::Message<UserEnum>>() }
+    , m_udpSocket{ m_owner.getAsioContext() }
+    , m_udpBufferIn{ ::std::make_unique<::xrn::network::Message<UserEnum>>() }
 {
     m_udpSocket.open(::asio::ip::udp::v4());
     m_udpSocket.bind(::asio::ip::udp::endpoint(::asio::ip::udp::v4(), 0));
@@ -192,6 +180,23 @@ template <
     }
 }
 
+////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::Connection<UserEnum>::startReceivingMessages()
+{
+    ::asio::post(
+        m_owner.getAsioContext()
+        , [this]() {
+            m_isTcpSendingAllowed = true;
+            this->startReceivingTcpMessages();
+            m_isUdpSendingAllowed = true;
+            this->startReceivingUdpMessages();
+            XRN_LOG("C{} Connection successfull, start receiving...", m_id);
+        }
+    );
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -201,6 +206,48 @@ template <
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::Connection<UserEnum>::synchronizeId()
+{
+    if (m_owner.isServer()) {
+        // send udp informations
+        this->forceSendNonQueuedTcpMessage(
+            ::std::make_unique<::xrn::network::Message<UserEnum>>(
+                ::xrn::network::Message<UserEnum>::SystemType::builtinIdInformation
+                , m_id
+            )
+            , [this](){ this->startReceivingMessages(); } // next step to start
+        );
+    } else {
+        // receive the udp information
+        this->receiveTcpMessage(
+            [this](){
+                if (
+                    m_tcpBufferIn->getTypeAsSystemType() !=
+                    ::xrn::network::Message<UserEnum>::SystemType::builtinIdInformation
+                ) {
+                    XRN_ERROR(
+                        "TCP{} Failed to synchronize ID (unexpected message received {})"
+                        , m_id
+                        , m_tcpBufferIn->getTypeAsInt()
+                    );
+                    this->disconnect();
+                    return;
+                }
+                m_id = m_tcpBufferIn->template pull<::xrn::Id>();
+                XRN_DEBUG("TCP{} ID information received", m_id);
+
+                // recreate a buffer as it has been set to null by move
+                m_tcpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>();
+
+                this->startReceivingMessages(); // next step to start
+            }
+        );
+    }
+}
+
 ////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
@@ -208,14 +255,13 @@ template <
     ::xrn::network::Message<UserEnum>& message
 )
 {
+    message.resetPointer();
     if (!m_owner.onSend(message, this->shared_from_this())) {
         XRN_WARNING("TCP Send canceled");
         return;
     }
 
-    m_tcpMessagesOut.push_back(::std::make_unique<::xrn::network::Message<UserEnum>>(
-        message
-    ));
+    m_tcpMessagesOut.push_back(::std::make_unique<::xrn::network::Message<UserEnum>>(message));
     this->sendAwaitingTcpMessages();
 }
 
@@ -226,6 +272,7 @@ template <
     ::xrn::network::Message<UserEnum>&& message
 )
 {
+    message.resetPointer();
     if (!m_owner.onSend(message, this->shared_from_this())) {
         XRN_WARNING("TCP Send canceled");
         return;
@@ -244,6 +291,7 @@ template <
     ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
 )
 {
+    message.resetPointer();
     if (!m_owner.onSend(message, this->shared_from_this())) {
         XRN_WARNING("TCP Send canceled");
         return;
@@ -280,7 +328,7 @@ template <
 ////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::Connection<UserEnum>::startReceivingTcpMessage()
+> void ::xrn::network::Connection<UserEnum>::startReceivingTcpMessages()
 {
     XRN_DEBUG("TCP{} Start receiving messages", m_id);
     this->receiveTcpMessage(
@@ -290,12 +338,10 @@ template <
             this->transferInMessageToOwner(::std::move(m_tcpBufferIn));
 
             // recreate a buffer as it has been set to null by move
-            m_tcpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>(
-                ::xrn::network::Message<UserEnum>::ProtocolType::tcp
-            );
+            m_tcpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>();
 
             // m_tcpBufferInLocker.unlock();
-            this->startReceivingTcpMessage();
+            this->startReceivingTcpMessages();
         }
     );
 }
@@ -320,7 +366,6 @@ template <
     this->forceSendNonQueuedTcpMessage(
         ::std::make_unique<::xrn::network::Message<UserEnum>>(
             ::xrn::network::Message<UserEnum>::SystemType::builtinUdpInformation
-            , ::xrn::network::Message<UserEnum>::ProtocolType::tcp // sent by tcp
             , m_udpSocket.local_endpoint().port()
         )
         , [](){}
@@ -345,11 +390,9 @@ template <
             auto port{ m_tcpBufferIn->template pull<::std::uint16_t>() };
 
             // recreate a buffer
-            m_tcpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>(
-                ::xrn::network::Message<UserEnum>::ProtocolType::tcp
-            );
+            m_tcpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>();
 
-            this->setUdpTarget(this->getAddress(), port);
+            this->setUdpTarget(this->getAddress(), port); // next step to start
         }
     );
 }
@@ -380,16 +423,8 @@ template <
                 return;
             }
 
-            XRN_LOG("UDP{} Connection accepted", m_id);
-            ::asio::post(
-                m_owner.getAsioContext()
-                , [this]() {
-                    m_isTcpSendingAllowed = true;
-                    this->startReceivingTcpMessage();
-                    m_isUdpSendingAllowed = true;
-                    this->startReceivingUdpMessage();
-                }
-            );
+            XRN_LOG("UDP{} Target setup", m_id);
+            this->synchronizeId(); // next step to start
         }
     );
 }
@@ -401,6 +436,7 @@ template <
     ::xrn::network::Message<UserEnum>& message
 )
 {
+    message.resetPointer();
     if (!m_owner.onSend(message, this->shared_from_this())) {
         XRN_WARNING("TCP Send canceled");
         return;
@@ -419,6 +455,7 @@ template <
     ::xrn::network::Message<UserEnum>&& message
 )
 {
+    message.resetPointer();
     if (!m_owner.onSend(message, this->shared_from_this())) {
         XRN_WARNING("TCP Send canceled");
         return;
@@ -437,6 +474,7 @@ template <
     ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
 )
 {
+    message.resetPointer();
     if (!m_owner.onSend(message, this->shared_from_this())) {
         XRN_WARNING("TCP Send canceled");
         return;
@@ -473,7 +511,7 @@ template <
 ////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::Connection<UserEnum>::startReceivingUdpMessage()
+> void ::xrn::network::Connection<UserEnum>::startReceivingUdpMessages()
 {
     XRN_DEBUG("TCP{} Start receiving messages", m_id);
     this->receiveUdpMessage(
@@ -483,12 +521,10 @@ template <
             this->transferInMessageToOwner(::std::move(m_udpBufferIn));
 
             // recreate a buffer as it has been set to null by move
-            m_udpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>(
-                ::xrn::network::Message<UserEnum>::ProtocolType::udp
-            );
+            m_udpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>();
 
             // m_udpBufferInLocker.unlock();
-            this->startReceivingUdpMessage();
+            this->startReceivingUdpMessages();
         }
     );
 }

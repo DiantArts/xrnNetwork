@@ -78,22 +78,7 @@ public:
         builtinError = static_cast<::std::uint16_t>(Message::UserType::last) + 1
         , builtinUndefined
         , builtinUdpInformation
-        , builtinPing
-        , builtinMessage
-        , builtinMessageAll
-    };
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Default enum for operations outside of the user usage
-    ///
-    /// Constructs a ::xrn::network::Message containing a point in time with no
-    /// value.
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    enum class ProtocolType : ::std::uint8_t {
-        undefined = 0
-        , tcp
-        , udp
+        , builtinIdInformation
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -126,9 +111,7 @@ public:
     /// \brief Empty message
     ///
     ///////////////////////////////////////////////////////////////////////////
-    explicit Message(
-        Message::ProtocolType protocolType = Message::ProtocolType::undefined
-    ) noexcept;
+    explicit Message() noexcept;
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Constructor for a system message
@@ -136,7 +119,6 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     explicit Message(
         Message::SystemType messageType
-        , Message::ProtocolType protocolType = Message::ProtocolType::undefined
     ) noexcept;
 
     ///////////////////////////////////////////////////////////////////////////
@@ -145,7 +127,6 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     explicit Message(
         Message::UserType messageType
-        , Message::ProtocolType protocolType = Message::ProtocolType::undefined
     ) noexcept;
 
     ///////////////////////////////////////////////////////////////////////////
@@ -154,7 +135,6 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     explicit Message(
         Message::SystemType messageType
-        , Message::ProtocolType protocolType
         , auto&&... args
     ) noexcept;
 
@@ -164,7 +144,6 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     explicit Message(
         Message::UserType messageType
-        , Message::ProtocolType protocolType
         , auto&&... args
     ) noexcept;
 
@@ -287,7 +266,9 @@ public:
     template <
         ::xrn::meta::constraint::isMemoryStr DataType
     > [[ nodiscard ]] auto pull()
-        -> ::std::string;
+        -> ::std::string_view;
+
+    void resetPointer();
 
 
 
@@ -404,19 +385,6 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     [[ nodiscard ]] auto getTypeAsInt() const
         -> ::std::uint16_t;
-
-    ///////////////////////////////////////////////////////////////////////////
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    [[ nodiscard ]] auto getProtocolType() const
-        -> Message::ProtocolType;
-
-    ///////////////////////////////////////////////////////////////////////////
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    void setProtocolType(
-        Message::ProtocolType protocolType
-    );
 
 
 
@@ -552,14 +520,6 @@ private:
     ///
     ////////////////////////////////////////////////////////////
     ::std::size_t m_index{ 0 };
-
-    ////////////////////////////////////////////////////////////
-    /// \brief Index inside the vector to pull out data
-    ///
-    /// current ptr for the user pulls
-    ///
-    ////////////////////////////////////////////////////////////
-    Message::ProtocolType m_protocolType{ Message::ProtocolType::undefined };
 
 };
 

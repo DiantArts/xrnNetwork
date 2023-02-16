@@ -13,7 +13,8 @@ template <
 > ::xrn::network::server::Server<UserEnum>::Server(
     ::std::uint16_t port
 )
-    : m_connectionAcceptor{
+    : ::xrn::network::AClient<UserEnum>{ true }
+    , m_connectionAcceptor{
         this->getAsioContext()
         , ::asio::ip::tcp::endpoint{ ::asio::ip::tcp::v4(), port }
     }
@@ -170,7 +171,7 @@ template <
 )
 {
     for (auto& client : m_connections) {
-        if (((client.getId()() != ignoredClients) && ...)) {
+        if (((client->getId() != ignoredClients->getId()) && ...)) {
             client->tcpSend(message);
         }
     }
@@ -307,7 +308,7 @@ template <
                     , socket.remote_endpoint().port()
                 );
                 auto connection{ ::std::make_shared<::xrn::network::Connection<UserEnum>>(
-                    ::std::move(socket), *this
+                    ::std::move(socket), *this, ++m_IdGenerator
                 ) };
                 connection->connectToClient();
                 m_connections.push_back(::std::move(connection));

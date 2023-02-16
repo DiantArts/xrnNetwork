@@ -130,7 +130,6 @@ template <
     m_connection->tcpSend(
         ::xrn::network::Message<UserEnum>{
             messageType
-            , ::xrn::network::Message<UserEnum>::ProtocolType::tcp
             , ::std::forward<decltype(args)>(args)...
         }
     );
@@ -147,7 +146,6 @@ template <
     m_connection->tcpSend(
         ::xrn::network::Message<UserEnum>{
             messageType
-            , ::xrn::network::Message<UserEnum>::ProtocolType::tcp
             , ::std::forward<decltype(args)>(args)...
         }
     );
@@ -194,7 +192,6 @@ template <
     m_connection->udpSend(
         ::xrn::network::Message<UserEnum>{
             messageType
-            , ::xrn::network::Message<UserEnum>::ProtocolType::udp
             , ::std::forward<decltype(args)>(args)...
         }
     );
@@ -211,7 +208,6 @@ template <
     m_connection->udpSend(
         ::xrn::network::Message<UserEnum>{
             messageType
-            , ::xrn::network::Message<UserEnum>::ProtocolType::udp
             , ::std::forward<decltype(args)>(args)...
         }
     );

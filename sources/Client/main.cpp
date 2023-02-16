@@ -57,7 +57,6 @@ auto main(
         } else if (str.size()) {
             if (!::std::strncmp(str.c_str(), "/", 1)) {
                 switch (*str.substr(1, 2).c_str()) {
-                case 'h': client.commandHelp(); break;
                 case 'q': goto ExitWhile;
                 default: ::fmt::print("System: {}\n", "invalid command"); break;
                 }

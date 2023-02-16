@@ -13,8 +13,11 @@
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> ::xrn::network::AClient<UserEnum>::AClient()
-    : m_idleWork{ m_asioContext }
+> ::xrn::network::AClient<UserEnum>::AClient(
+    bool isServer // = false
+)
+    : m_isServer{ isServer }
+    , m_idleWork{ m_asioContext }
     , m_asioContextThread{
         // Create the asio thread and its context that will hold every network actions
         [this](){
@@ -95,6 +98,7 @@ template <
         return;
     }
     this->onReceive(*message->getMessage(), message->getOwner());
+    message->getMessage()->resetPointer();
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -145,6 +149,15 @@ template <
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::AClient<UserEnum>::isServer() const
+    -> bool
+{
+    return m_isServer;
+}
 
 ///////////////////////////////////////////////////////////////////////////
 template <
