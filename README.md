@@ -4,6 +4,12 @@
 Linux only (because of CMake) TCP and UDP client/server
 
 # How to run
+Install the following (ubuntu-22.04 example):
+```
+apt-get install -y python3-pip cppcheck clang-tidy ccache moreutils cmake gcovr catch2 llvm
+pip install conan ninja
+```
+
 Launch the server first (compiling the client first prevent the compilation of the server - sorry):
 ```
 ./.toolchain/compile --server
