@@ -43,7 +43,7 @@ jobs:
       - name: 'Download dependencies'
         if: startsWith(matrix.config.os, 'ubuntu') # Only run this if on ubuntu
         run: |
-          sudo apt-get install -y python3-pip cppcheck clang-tidy ccache moreutils cmake gcovr catch2 ${{ matrix.config.packages }}
+          sudo apt-get install -y python3-pip cppcheck clang-tidy ccache moreutils cmake gcovr ${{ matrix.config.packages }}
           pip install conan ninja
 
       - name: 'Build and run tests'

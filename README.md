@@ -6,7 +6,7 @@ Linux only (because of CMake) TCP and UDP client/server.
 # How to run
 Run the following commands to install the dependencies (ubuntu-22.04 example):
 ```
-apt-get install -y python3-pip cppcheck clang-tidy ccache moreutils cmake gcovr catch2 llvm
+apt-get install -y python3-pip cppcheck clang-tidy ccache moreutils cmake gcovr llvm
 ```
 ```
 pip install conan ninja
