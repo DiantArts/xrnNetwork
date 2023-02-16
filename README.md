@@ -1,12 +1,14 @@
 # xrnNetwork
 [![Continous Integration](https://github.com/DiantArts/xrnNetwork/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/DiantArts/xrnNetwork/actions/workflows/continuous-integration.yml)
 
-Linux only (because of CMake) TCP and UDP client/server
+Linux only (because of CMake) TCP and UDP client/server.
 
 # How to run
-Install the following (ubuntu-22.04 example):
+Run the following commands to install the dependencies (ubuntu-22.04 example):
 ```
 apt-get install -y python3-pip cppcheck clang-tidy ccache moreutils cmake gcovr catch2 llvm
+```
+```
 pip install conan ninja
 ```
 
@@ -19,5 +21,6 @@ Launch the client
 ./.toolchain/compile
 ```
 
-Use `-d` to enable debug
+Use `-d` to enable debug.
+
 `\q` in the running console to close an instance (client or server)
