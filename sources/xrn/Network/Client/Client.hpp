@@ -121,11 +121,13 @@ public:
     /// \param host String containing the IP address
     /// \param port Port hosting the server at the specified IP address
     ///
+    /// \return True if successfully connected to the server, false otherwise
+    ///
     ///////////////////////////////////////////////////////////////////////////
-    void connectToServer(
+    [[ nodiscard ]] auto connectToServer(
         const ::std::string& host
         , ::std::uint16_t port
-    );
+    ) -> bool;
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Disconnect from the server

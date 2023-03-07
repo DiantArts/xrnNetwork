@@ -129,7 +129,7 @@ template <
                         , errCode.message()
                     );
                 }
-                return;
+                return this->disconnect();
             }
 
             if (!m_owner.onConnect(this->shared_from_this())) {
@@ -169,15 +169,24 @@ template <
             m_udpSocket.close();
         }
 
-        // probably waiting, notify it
-        m_owner.notifyIncommingMessageQueue();
-
         XRN_DEBUG("C{} ...Disconnected", m_id);
 
         if (!isAlreadyDestroyed) {
             m_owner.removeConnection(this->shared_from_this());
         }
     }
+
+    // might be waiting, notify it
+    m_owner.notifyIncommingMessageQueue();
+}
+
+////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::Connection<UserEnum>::isConnected()
+    -> bool
+{
+    return m_tcpSocket.is_open() && m_udpSocket.is_open();
 }
 
 ////////////////////////////////////////////////////////////

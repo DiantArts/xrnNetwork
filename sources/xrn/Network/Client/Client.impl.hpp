@@ -20,7 +20,9 @@ template <
     , ::std::uint16_t port
 )
 {
-    this->connectToServer(host, port);
+    if (!this->connectToServer(host, port)) {
+        XRN_FATAL("Could not connect to the server in constructor");
+    }
 }
 
 
@@ -69,10 +71,10 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::client::Client<UserEnum>::connectToServer(
+> auto ::xrn::network::client::Client<UserEnum>::connectToServer(
     const ::std::string& host
     , ::std::uint16_t port
-)
+) -> bool
 {
     this->m_isRunning = true;
     m_connection = ::std::make_shared<::xrn::network::Connection<UserEnum>>(*this);
@@ -80,7 +82,7 @@ template <
 
     // wait for a notification to make sure the connection is well initialized
     this->waitForIncommingMessages();
-    ::fmt::print("{}\n", "unlock");
+    return this->isConnectedToServer();
 }
 
 ///////////////////////////////////////////////////////////////////////////
