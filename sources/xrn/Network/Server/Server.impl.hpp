@@ -19,7 +19,7 @@ template <
         , ::asio::ip::tcp::endpoint{ ::asio::ip::tcp::v4(), port }
     }
 {
-    this->start();
+    this->startServer();
 }
 
 
@@ -36,7 +36,7 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > ::xrn::network::server::Server<UserEnum>::~Server()
 {
-    this->stop();
+    this->stopServer();
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -90,7 +90,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::start()
+> void ::xrn::network::server::Server<UserEnum>::startServer()
 {
     this->m_isRunning = true;
     this->startReceivingConnections();
@@ -100,7 +100,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::stop()
+> void ::xrn::network::server::Server<UserEnum>::stopServer()
 {
     if (this->isRunning()) {
         this->m_isRunning = false;
@@ -121,7 +121,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::tcpSend(
+> void ::xrn::network::server::Server<UserEnum>::tcpSendToClient(
     ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
         ::xrn::network::Connection<UserEnum>
@@ -136,7 +136,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::tcpSend(
+> void ::xrn::network::server::Server<UserEnum>::tcpSendToClient(
     ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... clients
 )
@@ -151,7 +151,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::tcpSendToAll(
+> void ::xrn::network::server::Server<UserEnum>::tcpSendToAllClients(
     ::xrn::network::Message<UserEnum>& message
 )
 {
@@ -163,7 +163,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::tcpSendToAll(
+> void ::xrn::network::server::Server<UserEnum>::tcpSendToAllClients(
     ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
         ::xrn::network::Connection<UserEnum>
@@ -180,7 +180,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::tcpSendToAll(
+> void ::xrn::network::server::Server<UserEnum>::tcpSendToAllClients(
     ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... ignoredClients
 )
@@ -204,7 +204,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::udpSend(
+> void ::xrn::network::server::Server<UserEnum>::udpSendToClient(
     ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
         ::xrn::network::Connection<UserEnum>
@@ -219,7 +219,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::udpSend(
+> void ::xrn::network::server::Server<UserEnum>::udpSendToClient(
     ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... clients
 )
@@ -234,7 +234,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::udpSendToAll(
+> void ::xrn::network::server::Server<UserEnum>::udpSendToAllClients(
     ::xrn::network::Message<UserEnum>& message
 )
 {
@@ -246,7 +246,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::udpSendToAll(
+> void ::xrn::network::server::Server<UserEnum>::udpSendToAllClients(
     ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
         ::xrn::network::Connection<UserEnum>
@@ -263,7 +263,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::server::Server<UserEnum>::udpSendToAll(
+> void ::xrn::network::server::Server<UserEnum>::udpSendToAllClients(
     ::xrn::network::Message<UserEnum>& message
     , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... ignoredClients
 )
@@ -297,7 +297,7 @@ template <
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
                     XRN_ERROR("Server: Operation canceled");
-                    return this->stop();
+                    return this->stopServer();
                 } else {
                     XRN_ERROR("Server: Failed to accept connection");
                 }
@@ -331,3 +331,4 @@ template <
 {
     return false;
 }
+

@@ -22,7 +22,7 @@ public:
         const ::std::string& str
     )
     {
-        this->udpSend(::example::MessageType::messageAll, m_connection->getId(), str);
+        this->udpSendToServer(::example::MessageType::messageAll, m_connection->getId(), str);
     }
 
     virtual void onReceive(

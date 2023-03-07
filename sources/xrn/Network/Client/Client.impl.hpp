@@ -8,8 +8,10 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////
-/// \brief Constructor
-///
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> ::xrn::network::client::Client<UserEnum>::Client() = default;
+
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
@@ -18,7 +20,7 @@ template <
     , ::std::uint16_t port
 )
 {
-    this->connect(host, port);
+    this->connectToServer(host, port);
 }
 
 
@@ -36,7 +38,7 @@ template <
 > ::xrn::network::client::Client<UserEnum>::~Client()
 {
     XRN_DEBUG("Destroying client");
-    this->disconnect();
+    this->disconnectFromServer();
     XRN_DEBUG("...Client destroyed");
 }
 
@@ -67,7 +69,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::client::Client<UserEnum>::connect(
+> void ::xrn::network::client::Client<UserEnum>::connectToServer(
     const ::std::string& host
     , ::std::uint16_t port
 )
@@ -75,12 +77,16 @@ template <
     this->m_isRunning = true;
     m_connection = ::std::make_shared<::xrn::network::Connection<UserEnum>>(*this);
     m_connection->connectToServer(host, port);
+
+    // wait for a notification to make sure the connection is well initialized
+    this->waitForIncommingMessages();
+    ::fmt::print("{}\n", "unlock");
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::client::Client<UserEnum>::disconnect()
+> void ::xrn::network::client::Client<UserEnum>::disconnectFromServer()
 {
     if (this->m_isRunning) {
         this->m_isRunning = false;
@@ -93,7 +99,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> auto ::xrn::network::client::Client<UserEnum>::isConnected() const
+> auto ::xrn::network::client::Client<UserEnum>::isConnectedToServer() const
     -> bool
 {
     return m_connection && m_connection->isConnected();
@@ -106,7 +112,7 @@ template <
     ::std::shared_ptr<::xrn::network::Connection<UserEnum>> _ [[ maybe_unused ]]
 )
 {
-    this->disconnect();
+    this->disconnectFromServer();
 }
 
 
@@ -122,7 +128,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::client::Client<UserEnum>::tcpSend(
+> void ::xrn::network::client::Client<UserEnum>::tcpSendToServer(
     typename ::xrn::network::Message<UserEnum>::SystemType messageType,
     auto&&... args
 )
@@ -138,7 +144,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::client::Client<UserEnum>::tcpSend(
+> void ::xrn::network::client::Client<UserEnum>::tcpSendToServer(
     UserEnum messageType,
     auto&&... args
 )
@@ -154,7 +160,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::client::Client<UserEnum>::tcpSend(
+> void ::xrn::network::client::Client<UserEnum>::tcpSendToServer(
     ::xrn::network::Message<UserEnum>& message
 )
 {
@@ -164,7 +170,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::client::Client<UserEnum>::tcpSend(
+> void ::xrn::network::client::Client<UserEnum>::tcpSendToServer(
     ::xrn::network::Message<UserEnum>&& message
 )
 {
@@ -184,7 +190,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::client::Client<UserEnum>::udpSend(
+> void ::xrn::network::client::Client<UserEnum>::udpSendToServer(
     typename ::xrn::network::Message<UserEnum>::SystemType messageType,
     auto&&... args
 )
@@ -200,7 +206,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::client::Client<UserEnum>::udpSend(
+> void ::xrn::network::client::Client<UserEnum>::udpSendToServer(
     UserEnum messageType,
     auto&&... args
 )
@@ -216,7 +222,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::client::Client<UserEnum>::udpSend(
+> void ::xrn::network::client::Client<UserEnum>::udpSendToServer(
     ::xrn::network::Message<UserEnum>& message
 )
 {
@@ -226,7 +232,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::client::Client<UserEnum>::udpSend(
+> void ::xrn::network::client::Client<UserEnum>::udpSendToServer(
     ::xrn::network::Message<UserEnum>&& message
 )
 {

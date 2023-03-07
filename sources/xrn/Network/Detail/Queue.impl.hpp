@@ -229,5 +229,6 @@ template <
     typename Type
 > void ::xrn::network::detail::Queue<Type>::notify() const
 {
-    m_blocker.notify_one();
+    ::std::scoped_lock lock{ m_mutexBlocker };
+    m_blocker.notify_all();
 }

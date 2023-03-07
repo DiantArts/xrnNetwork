@@ -39,7 +39,5 @@ auto main(
     }
 ExitWhile:
 
-    client.disconnect();
-
     return EXIT_SUCCESS;
 }

@@ -40,6 +40,16 @@ public:
     /// \brief Constructor
     ///
     ///////////////////////////////////////////////////////////////////////////
+    explicit Client();
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Construct and connect
+    ///
+    /// Call connectToServer()
+    ///
+    /// \see connectToServer()
+    ///
+    ///////////////////////////////////////////////////////////////////////////
     explicit Client(
         const ::std::string& host
         , ::std::uint16_t port
@@ -112,7 +122,7 @@ public:
     /// \param port Port hosting the server at the specified IP address
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void connect(
+    void connectToServer(
         const ::std::string& host
         , ::std::uint16_t port
     );
@@ -123,7 +133,7 @@ public:
     /// closes the connection
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void disconnect();
+    void disconnectFromServer();
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Connect to the Server
@@ -132,7 +142,7 @@ public:
     /// \param port Port hosting the server at the specified IP address
     ///
     ///////////////////////////////////////////////////////////////////////////
-    [[ nodiscard ]] auto isConnected() const
+    [[ nodiscard ]] auto isConnectedToServer() const
         -> bool;
 
     ///////////////////////////////////////////////////////////////////////////
@@ -161,7 +171,7 @@ public:
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void tcpSend(
+    void tcpSendToServer(
         typename ::xrn::network::Message<UserEnum>::SystemType messageType,
         auto&&... args
     );
@@ -175,7 +185,7 @@ public:
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void tcpSend(
+    void tcpSendToServer(
         UserEnum messageType,
         auto&&... args
     );
@@ -189,7 +199,7 @@ public:
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void tcpSend(
+    void tcpSendToServer(
         ::xrn::network::Message<UserEnum>& message
     );
 
@@ -202,7 +212,7 @@ public:
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void tcpSend(
+    void tcpSendToServer(
         ::xrn::network::Message<UserEnum>&& message
     );
 
@@ -224,7 +234,7 @@ public:
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void udpSend(
+    void udpSendToServer(
         typename ::xrn::network::Message<UserEnum>::SystemType messageType,
         auto&&... args
     );
@@ -238,7 +248,7 @@ public:
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void udpSend(
+    void udpSendToServer(
         UserEnum messageType,
         auto&&... args
     );
@@ -252,7 +262,7 @@ public:
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void udpSend(
+    void udpSendToServer(
         ::xrn::network::Message<UserEnum>& message
     );
 
@@ -265,7 +275,7 @@ public:
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
-    void udpSend(
+    void udpSendToServer(
         ::xrn::network::Message<UserEnum>&& message
     );
 

@@ -29,7 +29,7 @@ public:
                 , message.pull<::xrn::Id>()
                 , message.pull<::std::string>()
             );
-            this->tcpSendToAll(message, connection);
+            this->tcpSendToAllClients(message, connection);
             break;
         }}
     }

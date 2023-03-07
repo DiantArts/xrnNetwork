@@ -87,13 +87,18 @@ option(ENABLE_SHARED_LIBRARY "Compile the main program as a shared library" OFF)
 # xrnCMake
 # =========================================================================
 
-include(FetchContent)
-FetchContent_Declare(
-    _project_options
-    GIT_REPOSITORY https://github.com/DiantArts/xrnCMake
-    GIT_TAG        main
-)
-FetchContent_MakeAvailable(_project_options)
+get_filename_component(${library_name}_LOCAL_FULLPATH "../xrnCMake" REALPATH)
+if (EXISTS "${${library_name}_LOCAL_FULLPATH}") # if directory is present locally
+    include("../xrnCMake/Index.cmake")
+else ()
+    include(FetchContent)
+    FetchContent_Declare(
+        _project_options
+        GIT_REPOSITORY https://github.com/DiantArts/xrnCMake
+        GIT_TAG        main
+    )
+    FetchContent_MakeAvailable(_project_options)
+endif ()
 
 default_setup_filepaths()
 default_find_files()

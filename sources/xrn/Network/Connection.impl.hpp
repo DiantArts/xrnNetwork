@@ -242,6 +242,8 @@ template <
                 // recreate a buffer as it has been set to null by move
                 m_tcpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>();
 
+                m_owner.notifyIncommingMessageQueue();
+
                 this->startReceivingMessages(); // next step to start
             }
         );

@@ -22,7 +22,7 @@ auto main(
     while (server.isRunning()) {
         ::std::getline(::std::cin, str);
         if (str == "/q") {
-            server.stop();
+            server.stopServer();
         }
     }
 

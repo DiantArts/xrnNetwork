@@ -123,6 +123,14 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::AClient<UserEnum>::waitForIncommingMessages()
+{
+    m_messagesIn.wait();
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::AClient<UserEnum>::notifyIncommingMessageQueue()
 {
     m_messagesIn.notify();
