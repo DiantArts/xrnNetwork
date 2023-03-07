@@ -150,14 +150,6 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     void tcpSendToClient(
         ::xrn::network::Message<UserEnum>& message
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send a message over UDP to the clients given as argument
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    void tcpSendToClient(
-        ::xrn::network::Message<UserEnum>& message
         , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
             ::xrn::network::Connection<UserEnum>
         >> auto... clients
@@ -203,6 +195,57 @@ public:
         , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... ignoredClients
     );
 
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Send a message over UDP to the clients given as argument
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void tcpSendToClient(
+        ::xrn::network::Message<UserEnum>&& message
+        , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
+            ::xrn::network::Connection<UserEnum>
+        >> auto... clients
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Send a message over UDP to the clients given as argument
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void tcpSendToClient(
+        ::xrn::network::Message<UserEnum>&& message
+        , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... clients
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Send a message over UDP to all clients execpt the one in
+    /// argument
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void tcpSendToAllClients(
+        ::xrn::network::Message<UserEnum>&& message
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Send a message over UDP to all clients execpt the one in
+    /// argument
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void tcpSendToAllClients(
+        ::xrn::network::Message<UserEnum>&& message
+        , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
+            ::xrn::network::Connection<UserEnum>
+        >> auto... ignoredClients
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Send a message over UDP to all clients execpt the one in
+    /// argument
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void tcpSendToAllClients(
+        ::xrn::network::Message<UserEnum>&& message
+        , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... ignoredClients
+    );
+
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -211,14 +254,6 @@ public:
     //
     ///////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send a message over UDP to the clients given as argument
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    void udpSendToClient(
-        ::xrn::network::Message<UserEnum>& message
-    );
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Send a message over UDP to the clients given as argument
@@ -268,6 +303,57 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     void udpSendToAllClients(
         ::xrn::network::Message<UserEnum>& message
+        , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... ignoredClients
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Send a message over UDP to the clients given as argument
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void udpSendToClient(
+        ::xrn::network::Message<UserEnum>&& message
+        , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
+            ::xrn::network::Connection<UserEnum>
+        >> auto... clients
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Send a message over UDP to the clients given as argument
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void udpSendToClient(
+        ::xrn::network::Message<UserEnum>&& message
+        , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... clients
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Send a message over UDP to all clients execpt the one in
+    /// argument
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void udpSendToAllClients(
+        ::xrn::network::Message<UserEnum>&& message
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Send a message over UDP to all clients execpt the one in
+    /// argument
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void udpSendToAllClients(
+        ::xrn::network::Message<UserEnum>&& message
+        , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
+            ::xrn::network::Connection<UserEnum>
+        >> auto... ignoredClients
+    );
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Send a message over UDP to all clients execpt the one in
+    /// argument
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void udpSendToAllClients(
+        ::xrn::network::Message<UserEnum>&& message
         , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... ignoredClients
     );
 

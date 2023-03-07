@@ -268,7 +268,11 @@ public:
     > [[ nodiscard ]] auto pull()
         -> ::std::string_view;
 
-    void resetPointer();
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Reset the reading pointer
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void resetPointer() const;
 
 
 
@@ -519,7 +523,7 @@ private:
     /// current ptr for the user pulls
     ///
     ////////////////////////////////////////////////////////////
-    ::std::size_t m_index{ 0 };
+    mutable ::std::size_t m_index{ 0 };
 
 };
 

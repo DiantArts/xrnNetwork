@@ -230,7 +230,7 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum T
-> void ::xrn::network::Message<T>::resetPointer()
+> void ::xrn::network::Message<T>::resetPointer() const
 {
     m_index = 0;
 }

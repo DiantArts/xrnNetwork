@@ -80,7 +80,7 @@ template <
     , ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
 ) -> bool
 {
-    XRN_LOG("-> C{}: '{}'", target->getId(), message.getAsString());
+    XRN_DEBUG("-> C{}: '{}'", target->getId(), message.getAsString());
     return true;
 }
 
@@ -92,5 +92,5 @@ template <
     , ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
 )
 {
-    XRN_LOG("<- C{}: '{}'", target->getId(), message.getAsString());
+    XRN_DEBUG("<- C{}: '{}'", target->getId(), message.getAsString());
 }
