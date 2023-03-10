@@ -3,6 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////
 // Headers
 ///////////////////////////////////////////////////////////////////////////
+#include <memory>
 #include <xrn/Network/Detail/Constraint.hpp>
 #include <xrn/Network/Detail/Queue.hpp>
 #include <xrn/Network/Message.hpp>
@@ -210,32 +211,17 @@ public:
     /// If the queue was empty before the push, it then calls
     /// sendAwaitingMessages()
     ///
-    /// \param message Rvalue reference to the message to send
+    /// \param message pointer to the message to send
     ///
     ///////////////////////////////////////////////////////////////////////////
     void tcpSend(
-        ::xrn::network::Message<UserEnum>& message
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send a tcp message
-    ///
-    /// Asynchronously pushes the to the message into the queue of outgoing
-    /// messages
-    /// If the queue was empty before the push, it then calls
-    /// sendAwaitingMessages()
-    ///
-    /// \param message Rvalue reference to the message to send
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    void tcpSend(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
     );
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Send a tcp message and block the execution till it is sent
     ///
-    /// \param message Rvalue reference to the message to send
+    /// \param message pointer to the message to send
     ///
     ///////////////////////////////////////////////////////////////////////////
     void blockingTcpSend(
@@ -313,32 +299,17 @@ public:
     /// If the queue was empty before the push, it then calls
     /// sendAwaitingMessages()
     ///
-    /// \param message Rvalue reference to the message to send
+    /// \param message pointer to the message to send
     ///
     ///////////////////////////////////////////////////////////////////////////
     void udpSend(
-        ::xrn::network::Message<UserEnum>& message
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send a udp message
-    ///
-    /// Asynchronously pushes the to the message into the queue of outgoing
-    /// messages
-    /// If the queue was empty before the push, it then calls
-    /// sendAwaitingMessages()
-    ///
-    /// \param message Rvalue reference to the message to send
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    void udpSend(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
     );
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Send a udp message and block the execution till it is sent
     ///
-    /// \param message Rvalue reference to the message to send
+    /// \param message pointer to the message to send
     ///
     ///////////////////////////////////////////////////////////////////////////
     void blockingUdpSend(

@@ -22,6 +22,13 @@ public:
         ::std::shared_ptr<::xrn::network::Connection<::example::MessageType>> connection
     ) override
     {
+        if (message.getType() == ::example::MessageType::message) {
+            XRN_DEBUG("Preparing to print pull");
+            auto id{ message.template pull<::xrn::Id>() };
+            auto string{ message.template pull<::std::string>() };
+            XRN_DEBUG("{} <- '{}'", id, string);
+            message.resetPullPosition();
+        }
         switch (message.getType()) {
         default: {
             ::fmt::print(
@@ -29,7 +36,10 @@ public:
                 , message.pull<::xrn::Id>()
                 , message.pull<::std::string>()
             );
-            this->tcpSendToAllClients(message, connection);
+            this->tcpSendToAllClients(
+                ::std::make_unique<::xrn::network::Message<::example::MessageType>>(message)
+                , connection
+            );
             break;
         }}
     }
@@ -39,6 +49,13 @@ public:
         ::std::shared_ptr<::xrn::network::Connection<::example::MessageType>> connection
     ) -> bool override
     {
+        if (message.getType() == ::example::MessageType::message) {
+            XRN_DEBUG("Preparing to print pull");
+            auto id{ message.template pull<::xrn::Id>() };
+            auto string{ message.template pull<::std::string>() };
+            XRN_DEBUG("{} <- '{}'", id, string);
+            message.resetPullPosition();
+        }
         switch (message.getType()) {
         default: {
             ::fmt::print(

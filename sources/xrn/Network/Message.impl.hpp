@@ -9,73 +9,8 @@
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> ::xrn::network::Message<T>::Message() noexcept
-    : m_header{
-        .bodySize = 0
-        , .messageType = 0
-    }
-    , m_index{ 0 }
-{}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> ::xrn::network::Message<T>::Message(
-    Message::SystemType messageType
-) noexcept
-    : m_header{
-        .bodySize = 0
-        , .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
-    }
-    , m_index{ 0 }
-{}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> ::xrn::network::Message<T>::Message(
-    Message::UserType messageType
-) noexcept
-    : m_header{
-        .bodySize = 0
-        , .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
-    }
-    , m_index{ 0 }
-{}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> ::xrn::network::Message<T>::Message(
-    Message::SystemType messageType
-    , auto&&... args
-) noexcept
-    : m_header{
-        .bodySize = (Message::getSizeOfArg(::std::forward<decltype(args)>(args)) + ...)
-        , .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
-    }
-    , m_body{ m_header.bodySize }
-    , m_index{ 0 }
-{
-    this->pushMemory(0, ::std::forward<decltype(args)>(args)...);
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> ::xrn::network::Message<T>::Message(
-    Message::UserType messageType
-    , auto&&... args
-) noexcept
-    : m_header{
-        .bodySize = (Message::getSizeOfArg(::std::forward<decltype(args)>(args)) + ...)
-        , .messageType = static_cast<decltype(Message::Header::messageType)>(messageType)
-    }, m_body{ m_header.bodySize }
-    , m_index{ 0 }
-{
-    this->pushMemory(0, ::std::forward<decltype(args)>(args)...);
-}
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> ::xrn::network::Message<UserEnum>::Message() noexcept = default;
 
 
 
@@ -88,38 +23,38 @@ template <
 
 ////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> ::xrn::network::Message<T>::~Message()
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> ::xrn::network::Message<UserEnum>::~Message()
 {
     XRN_DEBUG("Message deleted");
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> inline ::xrn::network::Message<T>::Message(
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> ::xrn::network::Message<UserEnum>::Message(
     const Message& that
 ) noexcept = default;
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> inline auto ::xrn::network::Message<T>::operator=(
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::Message<UserEnum>::operator=(
     const Message& that
 ) noexcept
     -> Message& = default;
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> inline ::xrn::network::Message<T>::Message(
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> ::xrn::network::Message<UserEnum>::Message(
     Message&& that
 ) noexcept = default;
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> inline auto ::xrn::network::Message<T>::operator=(
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::Message<UserEnum>::operator=(
     Message&& that
 ) noexcept
     -> Message& = default;
@@ -128,139 +63,191 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// Push
+// Body execution
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> void ::xrn::network::Message<T>::push(
-    auto&&... args
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::Message<UserEnum>::push(
+    auto& data
 )
 {
-    const auto size{ (Message::getSizeOfArg(::std::forward<decltype(args)>(args)) + ...) };
-    const auto oldSize{ m_body.size() };
-    m_body.resize(oldSize + size);
-    m_header.bodySize = static_cast<decltype(m_header.bodySize)>(m_body.size());
-    pushMemory(oldSize, ::std::forward<decltype(args)>(args)...);
+    XRN_ASSERT(
+        sizeof(data) + m_header.bodySize < Message::maxSize
+        , "Cannot push futher than Message::maxSize ({} + {} < {})"
+        , sizeof(data)
+        , m_header.bodySize
+        , Message::maxSize
+    );
+    ::std::memcpy(m_packet.data() + this->getSize(), &data, sizeof(data));
+    m_header.bodySize += sizeof(data);
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> void ::xrn::network::Message<T>::push(
-    ::xrn::meta::constraint::isContiguousContainer auto&&... args
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::Message<UserEnum>::push(
+    auto&& data
 )
 {
-    const auto size{ (args.size() + ...) };
-    const auto oldSize{ m_body.size() };
-    m_body.resize(oldSize + size);
-    m_header.bodySize = m_body.size();
-    pushMemory(oldSize, ::std::forward<decltype(args)>(args)...);
+    XRN_ASSERT(
+        sizeof(data) + m_header.bodySize < Message::maxSize
+        , "Cannot push futher than Message::maxSize ({} + {} < {})"
+        , sizeof(data)
+        , m_header.bodySize
+        , Message::maxSize
+    );
+    ::std::memmove(m_packet.data() + this->getSize(), &data, sizeof(data));
+    m_header.bodySize += sizeof(data);
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> void ::xrn::network::Message<T>::pushAll(
-    auto&&... args
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::Message<UserEnum>::pushCopy(
+    auto* ptr
+    , ::std::size_t size
 )
 {
-    (this->push(::std::forward<decltype(args)>(args)), ...);
+    XRN_ASSERT(
+        size + m_header.bodySize < Message::maxSize
+        , "Cannot push futher than Message::maxSize ({} + {} < {})"
+        , size
+        , m_header.bodySize
+        , Message::maxSize
+    );
+    ::std::memcpy(m_packet.data() + this->getSize(), ptr, size);
+    m_header.bodySize += size;
 }
-
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
-// Pull
-//
-///////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::Message<UserEnum>::pushCopy(
+    auto* ptr
+    , Message::SizeType size
+)
+{
+    XRN_ASSERT(
+        size + m_header.bodySize < Message::maxSize
+        , "Cannot push futher than Message::maxSize ({} + {} < {})"
+        , size
+        , m_header.bodySize
+        , Message::maxSize
+    );
+    ::std::memcpy(m_packet.data() + this->getSize(), ptr, static_cast<::std::size_t>(size));
+    m_header.bodySize += size;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::Message<UserEnum>::pushMove(
+    auto* ptr
+    , ::std::size_t size
+)
+{
+    XRN_ASSERT(
+        size + m_header.bodySize < Message::maxSize
+        , "Cannot push futher than Message::maxSize ({} + {} < {})"
+        , size
+        , m_header.bodySize
+        , Message::maxSize
+    );
+    ::std::memmove(m_packet.data() + this->getSize(), ptr, size);
+    m_header.bodySize += size;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::Message<UserEnum>::pushMove(
+    auto* ptr
+    , Message::SizeType size
+)
+{
+    XRN_ASSERT(
+        size + m_header.bodySize < Message::maxSize
+        , "Cannot push futher than Message::maxSize ({} + {} < {})"
+        , size
+        , m_header.bodySize
+        , Message::maxSize
+    );
+    ::std::memmove(m_packet.data() + this->getSize(), ptr, static_cast<::std::size_t>(size));
+    m_header.bodySize += size;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
 > template <
-    typename RawDataType
-> auto ::xrn::network::Message<T>::pull()
-    -> ::std::remove_cvref_t<RawDataType>&
+    typename T
+> auto ::xrn::network::Message<UserEnum>::pull()
+    -> T&
 {
-    using DataType = ::std::remove_cvref_t<RawDataType>;
-    auto& ref{ *::std::bit_cast<DataType*>(&m_body[m_index]) };
-    m_index += sizeof(ref);
-    return ref;
+    XRN_ASSERT(
+        m_pullPointer + sizeof(T) <= m_header.bodySize
+        , "Cannot pull further than bodySize ({} + {} < {})"
+        , m_pullPointer
+        , sizeof(T)
+        , m_header.bodySize
+    );
+    auto& data = *::std::bit_cast<T*>(m_packet.data() + m_pullPointer);
+    m_pullPointer += sizeof(T);
+    return data;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
 > template <
-    ::xrn::meta::constraint::isPointer RawDataType
-> requires (
-    !::xrn::meta::constraint::sameAs<RawDataType, char>
-) auto ::xrn::network::Message<T>::pull()
-    -> ::std::span<::std::remove_cvref_t<::std::remove_pointer_t<RawDataType>>>
+    typename T
+> auto ::xrn::network::Message<UserEnum>::pull(
+    ::std::size_t size
+) -> T*
 {
-    using DataType = ::std::remove_cvref_t<::std::remove_pointer_t<RawDataType>>;
-    Message::SizeType size{ *::std::bit_cast<Message::SizeType*>(&m_body[m_index]) };
-    m_index += sizeof(size);
-    DataType* ptr{ ::std::bit_cast<DataType*>(&m_body[m_index]) };
-    m_index += sizeof(DataType) * size;
-    return { ptr, static_cast<::std::size_t>(size) };
+    XRN_ASSERT(
+        m_pullPointer + size <= this->getSize()
+        , "Cannot pull further than bodySize ({} + {} < {})"
+        , m_pullPointer
+        , size
+        , this->getSize()
+    );
+    auto* ptr = ::std::bit_cast<T*>(m_packet.data() + m_pullPointer);
+    m_pullPointer += size;
+    return ptr;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
 > template <
-    ::xrn::meta::constraint::isMemoryStr RawDataType
-> auto ::xrn::network::Message<T>::pull()
-    -> ::std::string_view
+    typename T
+> auto ::xrn::network::Message<UserEnum>::pull(
+    Message::SizeType size
+) -> T*
 {
-    Message::SizeType size{ *::std::bit_cast<Message::SizeType*>(&m_body[m_index]) };
-    m_index += sizeof(size);
-    char* ptr{ ::std::bit_cast<char*>(&m_body[m_index]) };
-    m_index += sizeof(char) * size;
-    return ::std::string_view{ ptr, static_cast<::std::size_t>(size) };
+    XRN_ASSERT(
+        m_pullPointer + size <= this->getSize()
+        , "Cannot pull further than bodySize ({} + {} < {})"
+        , m_pullPointer
+        , size
+        , this->getSize()
+    );
+    auto* ptr = ::std::bit_cast<T*>(m_packet.data() + m_pullPointer);
+    m_pullPointer += static_cast<::std::size_t>(size);
+    return ptr;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum T
-> void ::xrn::network::Message<T>::resetPointer() const
+> void ::xrn::network::Message<T>::resetPullPosition()
 {
-    m_index = 0;
-}
-
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
-// Size
-//
-///////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> void ::xrn::network::Message<T>::updateBodySize()
-{
-    m_body.resize(m_header.bodySize);
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> void ::xrn::network::Message<T>::resize(
-    ::std::size_t newSize
-)
-{
-    m_body.resize(newSize);
-    m_header.bodySize = newSize;
+    m_pullPointer = this->getHeaderSize();
 }
 
 
@@ -274,80 +261,35 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> auto ::xrn::network::Message<T>::getBodyAddr()
-    -> ::std::byte*
-{
-    return static_cast<::std::byte*>(m_body.data());
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> auto ::xrn::network::Message<T>::getHeader() const
-    -> const Message<T>::Header&
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::Message<UserEnum>::getHeader() const
+    -> const Message<UserEnum>::Header&
 {
     return m_header;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> auto ::xrn::network::Message<T>::getHeader()
-    -> Message<T>::Header&
-{
-    return m_header;
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> auto ::xrn::network::Message<T>::getHeaderAddr()
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::Message<UserEnum>::getAddr()
     -> ::std::byte*
 {
-    return ::std::bit_cast<::std::byte*>(&m_header);
+    return m_packet.data();
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> auto ::xrn::network::Message<T>::getBody() const
-    -> const ::std::vector<::std::byte>&
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::Message<UserEnum>::getSize() const
+    -> ::std::size_t
 {
-    return m_body;
+    return m_header.bodySize + Message::getHeaderSize();
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> auto ::xrn::network::Message<T>::getBody()
-    -> ::std::vector<::std::byte>&
-{
-    return m_body;
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> auto ::xrn::network::Message<T>::isBodyEmpty() const
-    -> bool
-{
-    return m_body.empty();
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> auto ::xrn::network::Message<T>::getAsString() const
-    -> ::std::string
-{
-    return { ::std::bit_cast<char*>(m_body.data()), m_body.size() };
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> auto ::xrn::network::Message<T>::getHeaderSize() const
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> constexpr auto ::xrn::network::Message<UserEnum>::getHeaderSize()
     -> ::std::size_t
 {
     return sizeof(Message::Header);
@@ -355,8 +297,8 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> auto ::xrn::network::Message<T>::getBodySize() const
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::Message<UserEnum>::getBodySize() const
     -> ::std::size_t
 {
     return m_header.bodySize;
@@ -364,26 +306,35 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> auto ::xrn::network::Message<T>::getType() const
-    -> T
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::Message<UserEnum>::getAsString() const
+    -> ::std::string
 {
-    return static_cast<T>(m_header.messageType);
+    return { ::std::bit_cast<char*>(m_packet.data()), m_header.bodySize };
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> auto ::xrn::network::Message<T>::getTypeAsSystemType() const
-    -> Message<T>::SystemType
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::Message<UserEnum>::getType() const
+    -> UserEnum
+{
+    return static_cast<UserEnum>(m_header.messageType);
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::Message<UserEnum>::getTypeAsSystemType() const
+    -> Message<UserEnum>::SystemType
 {
     return static_cast<Message::SystemType>(m_header.messageType);
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> auto ::xrn::network::Message<T>::getTypeAsInt() const
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::Message<UserEnum>::getTypeAsInt() const
     -> ::std::uint16_t
 {
     return m_header.messageType;
@@ -393,137 +344,130 @@ template <
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// Helpers size
+// Overload declaration: int
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> constexpr auto ::xrn::network::Message<T>::getSizeOfArg(
-    auto&& arg
-) -> decltype(Message::Header::bodySize)
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto operator<<(::xrn::network::Message<UserEnum>& message, int data)
+    -> ::xrn::network::Message<UserEnum>&
 {
-    return sizeof(arg);
+    message.push(data);
+    return message;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> constexpr auto ::xrn::network::Message<T>::getSizeOfArg(
-    const char *const arg
-) -> decltype(Message::Header::bodySize)
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto operator>>(::xrn::network::Message<UserEnum>& message, int& data)
+    -> ::xrn::network::Message<UserEnum>&
 {
-    return sizeof(Message::SizeType) + (sizeof(char) * ::std::strlen(arg));
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> constexpr auto ::xrn::network::Message<T>::getSizeOfArg(
-    ::xrn::meta::constraint::isContiguousContainer auto&& arg
-) -> decltype(Message::Header::bodySize)
-{
-    return static_cast<decltype(Message::Header::bodySize)>(sizeof(Message::SizeType)) +
-        static_cast<decltype(Message::Header::bodySize)>(sizeof(arg.at(0)) * arg.size());
+    data = message.template pull<int>();
+    return message;
 }
 
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// Helpers push
+// Overload declaration: float
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> void ::xrn::network::Message<T>::pushMemory(
-    ::std::size_t index
-    , auto&& arg
-    , auto&&... args
-)
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto operator<<(::xrn::network::Message<UserEnum>& message, float data)
+    -> ::xrn::network::Message<UserEnum>&
 {
-    const auto size{ Message::getSizeOfArg(arg) };
-    this->pushSingleMemory(index, ::std::forward<decltype(arg)>(arg));
-    if constexpr (sizeof...(args)) {
-        pushMemory(index + size, ::std::forward<decltype(args)>(args)...);
-    }
+    message.push(data);
+    return message;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> void ::xrn::network::Message<T>::pushSingleMemory(
-    ::std::size_t index
-    , auto& arg
-)
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto operator>>(::xrn::network::Message<UserEnum>& message, float& data)
+    -> ::xrn::network::Message<UserEnum>&
 {
-    ::std::memcpy(m_body.data() + index, &arg, sizeof(arg));
+    data = message.template pull<float>();
+    return message;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Overload declaration: double
+//
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto operator<<(::xrn::network::Message<UserEnum>& message, double data)
+    -> ::xrn::network::Message<UserEnum>&
+{
+    message.push(data);
+    return message;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> void ::xrn::network::Message<T>::pushSingleMemory(
-    ::std::size_t index
-    , auto&& arg
-)
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto operator>>(::xrn::network::Message<UserEnum>& message, double& data)
+    -> ::xrn::network::Message<UserEnum>&
 {
-    ::std::memmove(m_body.data() + index, &arg, sizeof(arg));
+    data = message.template pull<double>();
+    return message;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Overload declaration: string
+//
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto operator<<(::xrn::network::Message<UserEnum>& message, const ::std::string& str)
+    -> ::xrn::network::Message<UserEnum>&
+{
+    using SizeType = typename ::xrn::network::Message<UserEnum>::SizeType;
+    message.template push<SizeType>(static_cast<SizeType>(str.size()));
+    message.pushCopy(str.data(), str.size());
+    return message;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> void ::xrn::network::Message<T>::pushSingleMemory(
-    ::std::size_t index
-    , const char *const arg
-)
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto operator<<(::xrn::network::Message<UserEnum>& message, ::std::string&& str)
+    -> ::xrn::network::Message<UserEnum>&
 {
-    auto size{ static_cast<Message::SizeType>(::std::strlen(arg)) };
-    ::std::memcpy(m_body.data() + index, &size, sizeof(Message::SizeType));
-    ::std::memcpy(m_body.data() + index + sizeof(Message::SizeType), arg, size);
+    using SizeType = typename ::xrn::network::Message<UserEnum>::SizeType;
+    message.template push<SizeType>(static_cast<SizeType>(str.size()));
+    message.pushMove(str.data(), str.size());
+    return message;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> void ::xrn::network::Message<T>::pushSingleMemory(
-    ::std::size_t index
-    , char *const arg
-)
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto operator>>(::xrn::network::Message<UserEnum>& message, ::std::string& str)
+    -> ::xrn::network::Message<UserEnum>&
 {
-    auto size{ static_cast<Message::SizeType>(::std::strlen(arg)) };
-    ::std::memcpy(m_body.data() + index, &size, sizeof(Message::SizeType));
-    ::std::memmove(m_body.data() + index + sizeof(Message::SizeType), arg, size);
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> void ::xrn::network::Message<T>::pushSingleMemory(
-    ::std::size_t index
-    , ::xrn::meta::constraint::isContiguousContainer auto& arg
-)
-{
-    auto size{ static_cast<Message::SizeType>(arg.size()) };
-    ::std::memmove(m_body.data() + index, &size, sizeof(Message::SizeType));
-    ::std::memcpy(m_body.data() + index + sizeof(Message::SizeType), arg.data(), arg.size());
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum T
-> void ::xrn::network::Message<T>::pushSingleMemory(
-    ::std::size_t index
-    , ::xrn::meta::constraint::isContiguousContainer auto&& arg
-)
-{
-    auto size{ static_cast<Message::SizeType>(arg.size()) };
-    ::std::memmove(m_body.data() + index, &size, sizeof(Message::SizeType));
-    ::std::memmove(m_body.data() + index + sizeof(Message::SizeType), arg.data(), arg.size());
+    using SizeType = typename ::xrn::network::Message<UserEnum>::SizeType;
+    str.resize(static_cast<::std::size_t>(message.template pull<SizeType>()));
+    str.assign(message.template pull<char>(str.size()), str.size());
+    return message;
 }

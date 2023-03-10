@@ -171,10 +171,6 @@ public:
         , ::std::shared_ptr<::xrn::network::Connection<UserEnum>> target
     );
 
-
-
-private:
-
 };
 
 } // namespace xrn::network

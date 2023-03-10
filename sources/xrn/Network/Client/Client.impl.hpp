@@ -105,6 +105,16 @@ template <
     -> bool
 {
     return m_connection && m_connection->isConnected();
+
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::client::Client<UserEnum>::getConnectionId() const
+    -> ::xrn::Id
+{
+    return m_connection->getId();
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -136,10 +146,10 @@ template <
 )
 {
     m_connection->tcpSend(
-        ::xrn::network::Message<UserEnum>{
+        ::std::make_unique<::xrn::network::Message<UserEnum>>(
             messageType
             , ::std::forward<decltype(args)>(args)...
-        }
+        )
     );
 }
 
@@ -152,10 +162,10 @@ template <
 )
 {
     m_connection->tcpSend(
-        ::xrn::network::Message<UserEnum>{
+        ::std::make_unique<::xrn::network::Message<UserEnum>>(
             messageType
             , ::std::forward<decltype(args)>(args)...
-        }
+        )
     );
 }
 
@@ -163,20 +173,20 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::client::Client<UserEnum>::tcpSendToServer(
-    ::xrn::network::Message<UserEnum>& message
+    const ::xrn::network::Message<UserEnum>& message
 )
 {
-    m_connection->tcpSend(message);
+    m_connection->tcpSend(::std::make_unique<::xrn::network::Message<UserEnum>>(::std::move(message)));
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::client::Client<UserEnum>::tcpSendToServer(
-    ::xrn::network::Message<UserEnum>&& message
+    ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
 )
 {
-    m_connection->tcpSend(::std::forward<decltype(message)>(message));
+    m_connection->tcpSend(::std::move(message));
 }
 
 
@@ -198,10 +208,10 @@ template <
 )
 {
     m_connection->udpSend(
-        ::xrn::network::Message<UserEnum>{
+        ::std::make_unique<::xrn::network::Message<UserEnum>>(
             messageType
             , ::std::forward<decltype(args)>(args)...
-        }
+        )
     );
 }
 
@@ -214,10 +224,10 @@ template <
 )
 {
     m_connection->udpSend(
-        ::xrn::network::Message<UserEnum>{
+        ::std::make_unique<::xrn::network::Message<UserEnum>>(
             messageType
             , ::std::forward<decltype(args)>(args)...
-        }
+        )
     );
 }
 
@@ -225,20 +235,20 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::client::Client<UserEnum>::udpSendToServer(
-    ::xrn::network::Message<UserEnum>& message
+    const ::xrn::network::Message<UserEnum>& message
 )
 {
-    m_connection->udpSend(message);
+    m_connection->udpSend(::std::make_unique<::xrn::network::Message<UserEnum>>(::std::move(message)));
 }
 
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::client::Client<UserEnum>::udpSendToServer(
-    ::xrn::network::Message<UserEnum>&& message
+    ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
 )
 {
-    m_connection->udpSend(::std::forward<decltype(message)>(message));
+    m_connection->udpSend(::std::move(message));
 }
 
 

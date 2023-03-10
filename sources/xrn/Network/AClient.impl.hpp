@@ -91,38 +91,6 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::AClient<UserEnum>::pullIncommingMessage()
-{
-    auto message{ m_messagesIn.pop_front() };
-    if (this->handleIncommingSystemMessages(message->getOwner(), *message->getMessage())) {
-        return;
-    }
-    this->onReceive(*message->getMessage(), message->getOwner());
-    message->getMessage()->resetPointer();
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::AClient<UserEnum>::pullIncommingMessages()
-{
-    while (!m_messagesIn.empty()) {
-        this->pullIncommingMessage();
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::AClient<UserEnum>::blockingPullIncommingMessages()
-{
-    m_messagesIn.wait();
-    this->pullIncommingMessages();
-}
-
-///////////////////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::AClient<UserEnum>::waitForIncommingMessages()
 {
     m_messagesIn.wait();
@@ -141,9 +109,16 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::AClient<UserEnum>::pushIncommingMessage(
     ::std::shared_ptr<::xrn::network::Connection<UserEnum>> connection
-    , ::std::unique_ptr<::xrn::network::Message<UserEnum>>&& message
+    , ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
 )
 {
+    if (message->getType() == UserEnum::message) {
+        XRN_DEBUG("Preparing to print pull");
+        auto id{ message->template pull<::xrn::Id>() };
+        auto string{ message->template pull<::std::string>() };
+        XRN_DEBUG("{} <- '{}'", id, string);
+        message->resetPullPosition();
+    }
     m_messagesIn.push_back(::std::make_unique<::xrn::network::OwnedMessage<UserEnum>>(
         connection, ::std::move(message)
     ));
@@ -165,6 +140,15 @@ template <
     -> bool
 {
     return m_isServer;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto ::xrn::network::AClient<UserEnum>::isRunning() const
+    -> bool
+{
+    return m_isRunning;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -194,11 +178,51 @@ template <
     return m_asioContextThread;
 }
 
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Private incomming messages helpers
+//
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
-> auto ::xrn::network::AClient<UserEnum>::isRunning() const
-    -> bool
+> void ::xrn::network::AClient<UserEnum>::pullIncommingMessage()
 {
-    return m_isRunning;
+    auto message{ m_messagesIn.pop_front() };
+    if (this->handleIncommingSystemMessages(message->getOwner(), *message->getMessage())) {
+        return;
+    }
+    if (message->getMessage()->getType() == UserEnum::message) {
+        XRN_DEBUG("Preparing to print pull");
+        auto id{ message->getMessage()->template pull<::xrn::Id>() };
+        auto string{ message->getMessage()->template pull<::std::string>() };
+        XRN_DEBUG("{} <- '{}'", id, string);
+        message->getMessage()->resetPullPosition();
+    }
+    message->getMessage()->resetPullPosition();
+    this->onReceive(*message->getMessage(), message->getOwner());
+    message->getMessage()->resetPullPosition();
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::AClient<UserEnum>::pullIncommingMessages()
+{
+    while (!m_messagesIn.empty()) {
+        this->pullIncommingMessage();
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> void ::xrn::network::AClient<UserEnum>::blockingPullIncommingMessages()
+{
+    this->waitForIncommingMessages();
+    this->pullIncommingMessages();
 }

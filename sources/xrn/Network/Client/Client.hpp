@@ -138,14 +138,21 @@ public:
     void disconnectFromServer();
 
     ///////////////////////////////////////////////////////////////////////////
-    /// \brief Connect to the Server
-    ///
-    /// \param host String containing the IP address
-    /// \param port Port hosting the server at the specified IP address
+    /// \brief True if connected to the server
     ///
     ///////////////////////////////////////////////////////////////////////////
     [[ nodiscard ]] auto isConnectedToServer() const
         -> bool;
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// \brief Get the ID of the connection
+    ///
+    /// \warning Undefined behavior if isConnectedToServer() would returns
+    /// false and this method is called
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    [[ nodiscard ]] auto getConnectionId() const
+        -> ::xrn::Id;
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Delete the connection from the server
@@ -195,27 +202,25 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Send a message to the server
     ///
-    /// \param messageType Type of message sent
-    /// \param args Arguments to fill the message
+    /// \param message reference to copy
     ///
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
     void tcpSendToServer(
-        ::xrn::network::Message<UserEnum>& message
+        const ::xrn::network::Message<UserEnum>& message
     );
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Send a message to the server
     ///
-    /// \param messageType Type of message sent
-    /// \param args Arguments to fill the message
+    /// \param message pointer to the message
     ///
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
     void tcpSendToServer(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
     );
 
 
@@ -258,30 +263,30 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Send a message to the server
     ///
-    /// \param messageType Type of message sent
-    /// \param args Arguments to fill the message
+    /// \param message reference to copy
     ///
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
     void udpSendToServer(
-        ::xrn::network::Message<UserEnum>& message
+        const ::xrn::network::Message<UserEnum>& message
     );
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Send a message to the server
     ///
-    /// \param messageType Type of message sent
-    /// \param args Arguments to fill the message
+    /// \param message pointer to the message
     ///
     /// \see ::xrn::network::Message
     ///
     ///////////////////////////////////////////////////////////////////////////
     void udpSendToServer(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
     );
 
 
+
+private:
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -304,12 +309,11 @@ public:
     [[ nodiscard ]] virtual auto handleIncommingSystemMessages(
         ::std::shared_ptr<::xrn::network::Connection<UserEnum>> connection
         , ::xrn::network::Message<UserEnum>& message
-    ) -> bool override;
+    ) -> bool override final;
 
 
 
 protected:
-
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////

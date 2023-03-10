@@ -13,9 +13,7 @@ template <
 )
     : m_owner{ owner }
     , m_tcpSocket{ m_owner.getAsioContext() }
-    , m_tcpBufferIn{ ::std::make_unique<::xrn::network::Message<UserEnum>>() }
     , m_udpSocket{ m_owner.getAsioContext() }
-    , m_udpBufferIn{ ::std::make_unique<::xrn::network::Message<UserEnum>>() }
 {
     m_udpSocket.open(::asio::ip::udp::v4());
     m_udpSocket.bind(::asio::ip::udp::endpoint(::asio::ip::udp::v4(), 0));
@@ -33,9 +31,7 @@ template <
     : m_owner{ owner }
     , m_id{ clientId }
     , m_tcpSocket{ ::std::move(socket) }
-    , m_tcpBufferIn{ ::std::make_unique<::xrn::network::Message<UserEnum>>() }
     , m_udpSocket{ m_owner.getAsioContext() }
-    , m_udpBufferIn{ ::std::make_unique<::xrn::network::Message<UserEnum>>() }
 {
     m_udpSocket.open(::asio::ip::udp::v4());
     m_udpSocket.bind(::asio::ip::udp::endpoint(::asio::ip::udp::v4(), 0));
@@ -171,13 +167,13 @@ template <
 
         XRN_DEBUG("C{} ...Disconnected", m_id);
 
+        // might be waiting, notify it
+        m_owner.notifyIncommingMessageQueue();
+
         if (!isAlreadyDestroyed) {
             m_owner.removeConnection(this->shared_from_this());
         }
     }
-
-    // might be waiting, notify it
-    m_owner.notifyIncommingMessageQueue();
 }
 
 ////////////////////////////////////////////////////////////
@@ -197,11 +193,11 @@ template <
     ::asio::post(
         m_owner.getAsioContext()
         , [this]() {
+            XRN_LOG("C{} Connection successfull, start receiving...", m_id);
             m_isTcpSendingAllowed = true;
             this->startReceivingTcpMessages();
             m_isUdpSendingAllowed = true;
             this->startReceivingUdpMessages();
-            XRN_LOG("C{} Connection successfull, start receiving...", m_id);
         }
     );
 }
@@ -248,9 +244,6 @@ template <
                 m_id = m_tcpBufferIn->template pull<::xrn::Id>();
                 XRN_DEBUG("TCP{} ID information received", m_id);
 
-                // recreate a buffer as it has been set to null by move
-                m_tcpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>();
-
                 m_owner.notifyIncommingMessageQueue();
 
                 this->startReceivingMessages(); // next step to start
@@ -263,35 +256,16 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::Connection<UserEnum>::tcpSend(
-    ::xrn::network::Message<UserEnum>& message
+    ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
 )
 {
-    message.resetPointer();
-    if (!m_owner.onSend(message, this->shared_from_this())) {
+    message->resetPullPosition();
+    if (!m_owner.onSend(*message, this->shared_from_this())) {
         XRN_WARNING("TCP Send canceled");
         return;
     }
 
-    m_tcpMessagesOut.push_back(::std::make_unique<::xrn::network::Message<UserEnum>>(message));
-    this->sendAwaitingTcpMessages();
-}
-
-////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::Connection<UserEnum>::tcpSend(
-    ::xrn::network::Message<UserEnum>&& message
-)
-{
-    message.resetPointer();
-    if (!m_owner.onSend(message, this->shared_from_this())) {
-        XRN_WARNING("TCP Send canceled");
-        return;
-    }
-
-    m_tcpMessagesOut.push_back(::std::make_unique<::xrn::network::Message<UserEnum>>(
-        ::std::move(message)
-    ));
+    m_tcpMessagesOut.push_back(::std::move(message));
     this->sendAwaitingTcpMessages();
 }
 
@@ -302,8 +276,8 @@ template <
     ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
 )
 {
-    message.resetPointer();
-    if (!m_owner.onSend(message, this->shared_from_this())) {
+    message->resetPullPosition();
+    if (!m_owner.onSend(*message, this->shared_from_this())) {
         XRN_WARNING("TCP Send canceled");
         return;
     }
@@ -342,14 +316,23 @@ template <
 > void ::xrn::network::Connection<UserEnum>::startReceivingTcpMessages()
 {
     XRN_DEBUG("TCP{} Start receiving messages", m_id);
+
     this->receiveTcpMessage(
         [this](){
             XRN_DEBUG("message received");
             // send the message to the queue and start to receive messages again
+            if (m_tcpBufferIn->getType() == UserEnum::message) {
+                XRN_DEBUG("Preparing to print pull");
+                auto id{ m_tcpBufferIn->template pull<::xrn::Id>() };
+                XRN_DEBUG("Preparing to print pull (1 done)");
+                auto string{ m_tcpBufferIn->template pull<::std::string>() };
+                XRN_DEBUG("Preparing to print pull (2 done)");
+                XRN_DEBUG("{}", id);
+                XRN_DEBUG("<-");
+                XRN_DEBUG("'{}'", string);
+                m_tcpBufferIn->resetPullPosition();
+            }
             this->transferInMessageToOwner(::std::move(m_tcpBufferIn));
-
-            // recreate a buffer as it has been set to null by move
-            m_tcpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>();
 
             // m_tcpBufferInLocker.unlock();
             this->startReceivingTcpMessages();
@@ -400,9 +383,6 @@ template <
             XRN_DEBUG("TCP{} UDP information received", m_id);
             auto port{ m_tcpBufferIn->template pull<::std::uint16_t>() };
 
-            // recreate a buffer
-            m_tcpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>();
-
             this->setUdpTarget(this->getAddress(), port); // next step to start
         }
     );
@@ -425,7 +405,7 @@ template <
                 if (errCode == ::asio::error::operation_aborted) {
                     XRN_WARNING("UDP Target canceled");
                 } else if (errCode == ::asio::error::eof) {
-                    XRN_LOG("TCP{} Connection closed", m_id);
+                    XRN_LOG("UDP{} Connection closed", m_id);
                     this->disconnect();
                 } else {
                     XRN_ERROR("UDP{} Failed to target {}:{}", m_id, host, port);
@@ -444,37 +424,22 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::Connection<UserEnum>::udpSend(
-    ::xrn::network::Message<UserEnum>& message
+    ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
 )
 {
-    message.resetPointer();
-    if (!m_owner.onSend(message, this->shared_from_this())) {
-        XRN_WARNING("TCP Send canceled");
+    if (message->getType() == UserEnum::message) {
+        XRN_DEBUG("Preparing to print pull");
+        auto id{ message->template pull<::xrn::Id>() };
+        auto string{ message->template pull<::std::string>() };
+        XRN_DEBUG("{} <- '{}'", id, string);
+        message->resetPullPosition();
+    }
+    if (!m_owner.onSend(*message, this->shared_from_this())) {
+        XRN_WARNING("UDP Send canceled");
         return;
     }
 
-    m_udpMessagesOut.push_back(::std::make_unique<::xrn::network::Message<UserEnum>>(
-        message
-    ));
-    this->sendAwaitingUdpMessages();
-}
-
-////////////////////////////////////////////////////////////
-template <
-    ::xrn::network::detail::constraint::isValidEnum UserEnum
-> void ::xrn::network::Connection<UserEnum>::udpSend(
-    ::xrn::network::Message<UserEnum>&& message
-)
-{
-    message.resetPointer();
-    if (!m_owner.onSend(message, this->shared_from_this())) {
-        XRN_WARNING("TCP Send canceled");
-        return;
-    }
-
-    m_udpMessagesOut.push_back(::std::make_unique<::xrn::network::Message<UserEnum>>(
-        ::std::move(message)
-    ));
+    m_udpMessagesOut.push_back(::std::move(message));
     this->sendAwaitingUdpMessages();
 }
 
@@ -485,9 +450,9 @@ template <
     ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
 )
 {
-    message.resetPointer();
-    if (!m_owner.onSend(message, this->shared_from_this())) {
-        XRN_WARNING("TCP Send canceled");
+    message->resetPullPosition();
+    if (!m_owner.onSend(*message, this->shared_from_this())) {
+        XRN_WARNING("UDP Send canceled");
         return;
     }
 
@@ -524,15 +489,21 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::Connection<UserEnum>::startReceivingUdpMessages()
 {
-    XRN_DEBUG("TCP{} Start receiving messages", m_id);
+    XRN_DEBUG("UDP{} Start receiving messages", m_id);
+
     this->receiveUdpMessage(
         [this](){
             XRN_DEBUG("message received");
             // send the message to the queue and start to receive messages again
-            this->transferInMessageToOwner(::std::move(m_udpBufferIn));
+            if (m_udpBufferIn->getType() == UserEnum::message) {
+                XRN_DEBUG("Preparing to print pull");
+                auto id{ m_udpBufferIn->template pull<::xrn::Id>() };
+                auto string{ m_udpBufferIn->template pull<::std::string>() };
+                XRN_DEBUG("{} <- '{}'", id, string);
+                m_udpBufferIn->resetPullPosition();
+            }
 
-            // recreate a buffer as it has been set to null by move
-            m_udpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>();
+            this->transferInMessageToOwner(::std::move(m_udpBufferIn));
 
             // m_udpBufferInLocker.unlock();
             this->startReceivingUdpMessages();
@@ -592,9 +563,15 @@ template <
     ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
 )
 {
+    if (message->getType() == UserEnum::message) {
+        XRN_DEBUG("Preparing to print pull");
+        auto id{ message->template pull<::xrn::Id>() };
+        auto string{ message->template pull<::std::string>() };
+        XRN_DEBUG("{} <- '{}'", id, string);
+        message->resetPullPosition();
+    }
     m_owner.pushIncommingMessage(this->shared_from_this(), ::std::move(message));
     m_owner.notifyIncommingMessageQueue();
-    message = nullptr;
 }
 
 
@@ -710,6 +687,13 @@ template <
                 return;
             }
 
+            XRN_DEBUG(
+                "TCP{} <- Is body fully sent? {} ({} / {})"
+                , m_id
+                , !(bytesAlreadySent + length < message->getHeaderSize())
+                , bytesAlreadySent + length
+                , message->getHeaderSize()
+            );
             // if not everything has been sent
             if (bytesAlreadySent + length < message->getHeaderSize()) {
                 XRN_DEBUG(
@@ -785,6 +769,13 @@ template <
                 return;
             }
 
+            XRN_DEBUG(
+                "TCP{} <- Is body fully sent? {} ({} / {})"
+                , m_id
+                , !(bytesAlreadySent + length < message->getBodySize())
+                , bytesAlreadySent + length
+                , message->getBodySize()
+            );
             // if not everything has been sent
             if (bytesAlreadySent + length < message->getBodySize()) {
                 XRN_DEBUG(
@@ -834,6 +825,9 @@ template <
     , ::std::size_t bytesAlreadyReceived // = 0
 )
 {
+    // recreate a buffer as it has been set to null by move
+    m_tcpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>();
+
     // lambda called by asio to receive the body
     auto lambda{
         [this, bytesAlreadyReceived, successCallback](
@@ -854,6 +848,13 @@ template <
                 return;
             }
 
+            XRN_DEBUG(
+                "TCP{} <- Is header fully received? {} ({} / {})"
+                , m_id
+                , !(bytesAlreadyReceived + length < m_tcpBufferIn->getHeaderSize())
+                , bytesAlreadyReceived + length
+                , m_tcpBufferIn->getHeaderSize()
+            );
             // if not everything has been received
             if (bytesAlreadyReceived + length < m_tcpBufferIn->getHeaderSize()) {
                 XRN_DEBUG(
@@ -928,8 +929,9 @@ template <
             }
 
             XRN_DEBUG(
-                "TCP{} <- Is body not fully received??? ({} / {})"
+                "TCP{} <- Is body fully received? {} ({} / {})"
                 , m_id
+                , !(bytesAlreadyReceived + length < m_tcpBufferIn->getBodySize())
                 , bytesAlreadyReceived + length
                 , m_tcpBufferIn->getBodySize()
             );
@@ -1079,6 +1081,13 @@ template <
                 return;
             }
 
+            XRN_DEBUG(
+                "UDP{} <- Is header fully sent? {} ({} / {})"
+                , m_id
+                , !(bytesAlreadySent + length < message->getHeaderSize())
+                , bytesAlreadySent + length
+                , message->getHeaderSize()
+            );
             // if not everything has been sent
             if (bytesAlreadySent + length < message->getHeaderSize()) {
                 XRN_DEBUG(
@@ -1154,6 +1163,13 @@ template <
                 return;
             }
 
+            XRN_DEBUG(
+                "UDP{} <- Is body fully sent? {} ({} / {})"
+                , m_id
+                , !(bytesAlreadySent + length < message->getBodySize())
+                , bytesAlreadySent + length
+                , message->getBodySize()
+            );
             // if not everything has been sent
             if (bytesAlreadySent + length < message->getBodySize()) {
                 XRN_DEBUG(
@@ -1203,6 +1219,9 @@ template <
     , ::std::size_t bytesAlreadyReceived // = 0
 )
 {
+    // recreate a buffer as it has been set to null by move
+    m_udpBufferIn = ::std::make_unique<::xrn::network::Message<UserEnum>>();
+
     // lambda called by asio to receive the body
     auto lambda{
         [this, bytesAlreadyReceived, successCallback](
@@ -1223,6 +1242,13 @@ template <
                 return;
             }
 
+            XRN_DEBUG(
+                "UDP{} <- Is header fully received? {} ({} / {})"
+                , m_id
+                , !(bytesAlreadyReceived + length < m_udpBufferIn->getHeaderSize())
+                , bytesAlreadyReceived + length
+                , m_udpBufferIn->getHeaderSize()
+            );
             // if not everything has been received
             if (bytesAlreadyReceived + length < m_udpBufferIn->getHeaderSize()) {
                 XRN_DEBUG(
@@ -1297,8 +1323,9 @@ template <
             }
 
             XRN_DEBUG(
-                "UDP{} <- Is body not fully received??? ({} / {})"
+                "UDP{} <- Is body fully received? {} ({} / {})"
                 , m_id
+                , !(bytesAlreadyReceived + length < m_udpBufferIn->getBodySize())
                 , bytesAlreadyReceived + length
                 , m_udpBufferIn->getBodySize()
             );

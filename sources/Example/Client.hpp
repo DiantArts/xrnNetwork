@@ -22,12 +22,12 @@ public:
         const ::std::string& str
     )
     {
-        this->udpSendToServer(::example::MessageType::messageAll, m_connection->getId(), str);
+        this->tcpSendToServer(::example::MessageType::message, m_connection->getId(), str);
     }
 
     virtual void onReceive(
         ::xrn::network::Message<::example::MessageType>& message,
-        ::std::shared_ptr<::xrn::network::Connection<::example::MessageType>> connection
+        ::std::shared_ptr<::xrn::network::Connection<::example::MessageType>> connection [[ maybe_unused ]]
     ) override
     {
         switch (message.getType()) {
@@ -46,9 +46,15 @@ public:
         ::std::shared_ptr<::xrn::network::Connection<::example::MessageType>> connection
     ) -> bool override
     {
+        if (message.getType() == ::example::MessageType::message) {
+            XRN_DEBUG("Preparing to print pull");
+            auto id{ message.template pull<::xrn::Id>() };
+            auto string{ message.template pull<::std::string>() };
+            XRN_DEBUG("{} <- '{}'", id, string);
+            message.resetPullPosition();
+        }
         switch (message.getType()) {
         default: {
-            auto id [[ maybe_unused ]] { message.pull<::xrn::Id>() };
             ::fmt::print(
                 "-> C{} '{}'\n"
                 , connection->getId()

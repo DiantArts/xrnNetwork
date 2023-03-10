@@ -107,6 +107,12 @@ public:
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
+    /// \brief Start accepting the connections
+    ///
+    ///////////////////////////////////////////////////////////////////////////
+    void startReceivingConnections();
+
+    ///////////////////////////////////////////////////////////////////////////
     /// \brief Delete the connection from the server
     ///
     ///////////////////////////////////////////////////////////////////////////
@@ -149,7 +155,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void tcpSendToClient(
-        ::xrn::network::Message<UserEnum>& message
+        const ::xrn::network::Message<UserEnum>& message
         , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
             ::xrn::network::Connection<UserEnum>
         >> auto... clients
@@ -160,7 +166,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void tcpSendToClient(
-        ::xrn::network::Message<UserEnum>& message
+        const ::xrn::network::Message<UserEnum>& message
         , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... clients
     );
 
@@ -170,7 +176,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void tcpSendToAllClients(
-        ::xrn::network::Message<UserEnum>& message
+        const ::xrn::network::Message<UserEnum>& message
     );
 
     ///////////////////////////////////////////////////////////////////////////
@@ -179,7 +185,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void tcpSendToAllClients(
-        ::xrn::network::Message<UserEnum>& message
+        const ::xrn::network::Message<UserEnum>& message
         , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
             ::xrn::network::Connection<UserEnum>
         >> auto... ignoredClients
@@ -191,7 +197,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void tcpSendToAllClients(
-        ::xrn::network::Message<UserEnum>& message
+        const ::xrn::network::Message<UserEnum>& message
         , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... ignoredClients
     );
 
@@ -200,7 +206,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void tcpSendToClient(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
         , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
             ::xrn::network::Connection<UserEnum>
         >> auto... clients
@@ -211,7 +217,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void tcpSendToClient(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
         , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... clients
     );
 
@@ -221,7 +227,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void tcpSendToAllClients(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
     );
 
     ///////////////////////////////////////////////////////////////////////////
@@ -230,7 +236,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void tcpSendToAllClients(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
         , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
             ::xrn::network::Connection<UserEnum>
         >> auto... ignoredClients
@@ -242,7 +248,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void tcpSendToAllClients(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
         , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... ignoredClients
     );
 
@@ -260,7 +266,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void udpSendToClient(
-        ::xrn::network::Message<UserEnum>& message
+        const ::xrn::network::Message<UserEnum>& message
         , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
             ::xrn::network::Connection<UserEnum>
         >> auto... clients
@@ -271,7 +277,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void udpSendToClient(
-        ::xrn::network::Message<UserEnum>& message
+        const ::xrn::network::Message<UserEnum>& message
         , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... clients
     );
 
@@ -281,7 +287,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void udpSendToAllClients(
-        ::xrn::network::Message<UserEnum>& message
+        const ::xrn::network::Message<UserEnum>& message
     );
 
     ///////////////////////////////////////////////////////////////////////////
@@ -290,7 +296,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void udpSendToAllClients(
-        ::xrn::network::Message<UserEnum>& message
+        const ::xrn::network::Message<UserEnum>& message
         , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
             ::xrn::network::Connection<UserEnum>
         >> auto... ignoredClients
@@ -302,7 +308,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void udpSendToAllClients(
-        ::xrn::network::Message<UserEnum>& message
+        const ::xrn::network::Message<UserEnum>& message
         , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... ignoredClients
     );
 
@@ -311,7 +317,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void udpSendToClient(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
         , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
             ::xrn::network::Connection<UserEnum>
         >> auto... clients
@@ -322,7 +328,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void udpSendToClient(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
         , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... clients
     );
 
@@ -332,7 +338,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void udpSendToAllClients(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
     );
 
     ///////////////////////////////////////////////////////////////////////////
@@ -341,7 +347,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void udpSendToAllClients(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
         , ::xrn::meta::constraint::sameAs<::std::shared_ptr<
             ::xrn::network::Connection<UserEnum>
         >> auto... ignoredClients
@@ -353,11 +359,13 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void udpSendToAllClients(
-        ::xrn::network::Message<UserEnum>&& message
+        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
         , ::xrn::meta::constraint::sameAs<::xrn::Id> auto... ignoredClients
     );
 
 
+
+private:
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -365,12 +373,6 @@ public:
     //
     ///////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Start accepting the connections
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    void startReceivingConnections();
 
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Handle if the message is a system message
@@ -386,7 +388,7 @@ public:
     [[ nodiscard ]] virtual auto handleIncommingSystemMessages(
         ::std::shared_ptr<::xrn::network::Connection<UserEnum>> connection
         , ::xrn::network::Message<UserEnum>& message
-    ) -> bool override;
+    ) -> bool override final;
 
 
 
