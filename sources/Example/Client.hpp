@@ -32,11 +32,10 @@ public:
     {
         switch (message.getType()) {
         default: {
-            ::fmt::print(
-                "<- C{} '{}'\n"
-                , message.pull<::xrn::Id>()
-                , message.pull<::std::string>()
-            );
+            ::xrn::Id id;
+            ::std::string string;
+            message >> id >> string;
+            ::fmt::print("<- C{} '{}'\n", id, string);
         break;
         }}
     }
@@ -48,18 +47,17 @@ public:
     {
         if (message.getType() == ::example::MessageType::message) {
             XRN_DEBUG("Preparing to print pull");
-            auto id{ message.template pull<::xrn::Id>() };
-            auto string{ message.template pull<::std::string>() };
+            ::xrn::Id id;
+            ::std::string string;
+            message >> id >> string;
             XRN_DEBUG("{} <- '{}'", id, string);
             message.resetPullPosition();
         }
         switch (message.getType()) {
         default: {
-            ::fmt::print(
-                "-> C{} '{}'\n"
-                , connection->getId()
-                , message.pull<::std::string>()
-            );
+            ::std::string string;
+            message >> string;
+            ::fmt::print("-> C{} '{}'\n", connection->getId(), string);
             break;
         }}
         return true;

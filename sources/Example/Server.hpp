@@ -24,18 +24,18 @@ public:
     {
         if (message.getType() == ::example::MessageType::message) {
             XRN_DEBUG("Preparing to print pull");
-            auto id{ message.template pull<::xrn::Id>() };
-            auto string{ message.template pull<::std::string>() };
+            ::xrn::Id id;
+            ::std::string string;
+            message >> id >> string;
             XRN_DEBUG("{} <- '{}'", id, string);
             message.resetPullPosition();
         }
         switch (message.getType()) {
         default: {
-            ::fmt::print(
-                "<- C{} '{}'\n"
-                , message.pull<::xrn::Id>()
-                , message.pull<::std::string>()
-            );
+            ::xrn::Id id;
+            ::std::string string;
+            message >> id >> string;
+            ::fmt::print("<- C{} '{}'\n", id, string);
             this->tcpSendToAllClients(
                 ::std::make_unique<::xrn::network::Message<::example::MessageType>>(message)
                 , connection
@@ -51,19 +51,18 @@ public:
     {
         if (message.getType() == ::example::MessageType::message) {
             XRN_DEBUG("Preparing to print pull");
-            auto id{ message.template pull<::xrn::Id>() };
-            auto string{ message.template pull<::std::string>() };
+            ::xrn::Id id;
+            ::std::string string;
+            message >> id >> string;
             XRN_DEBUG("{} <- '{}'", id, string);
             message.resetPullPosition();
         }
         switch (message.getType()) {
         default: {
-            ::fmt::print(
-                "C{} -> C{} '{}'\n"
-                , message.pull<::xrn::Id>()
-                , connection->getId()
-                , message.pull<::std::string>()
-            );
+            ::xrn::Id id;
+            ::std::string string;
+            message >> id >> string;
+            ::fmt::print("C{} -> C{} '{}'\n", id, connection->getId(), string);
             break;
         }}
         return true;

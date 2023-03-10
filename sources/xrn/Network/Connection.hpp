@@ -435,9 +435,9 @@ private:
     ///
     /// Sends the message in front of the queue. Once sent, the message is
     /// deleted
-    //
+    ///
     /// \param successCallback Function, lambda or class called on success
-    //
+    ///
     ///////////////////////////////////////////////////////////////////////////
     void sendTcpQueueMessage(
         ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
@@ -448,9 +448,9 @@ private:
     ///
     /// Sends the message in front of the queue. Once sent, the message is
     /// deleted. Skip the check of m_isSendingAllowed
-    //
+    ///
     /// \param successCallback Function, lambda or class called on success
-    //
+    ///
     ///////////////////////////////////////////////////////////////////////////
     void forceSendTcpQueueMessage(
         ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
@@ -462,9 +462,10 @@ private:
     /// Same as sendNonQueuedTcpMessage(), but does not copy the message, but
     /// sends the message in front of the queue
     /// Once sent, the message is deleted
-    //
+    ///
+    /// \param message Message to send
     /// \param successCallback Function, lambda or class called on success
-    //
+    ///
     ///////////////////////////////////////////////////////////////////////////
     void sendNonQueuedTcpMessage(
         ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
@@ -478,9 +479,10 @@ private:
     /// sends the message in front of the queue
     /// Once sent, the message is deleted
     /// Skip the check of m_isSendingAllowed
-    //
+    ///
+    /// \param message Message to send
     /// \param successCallback Function, lambda or class called on success
-    //
+    ///
     ///////////////////////////////////////////////////////////////////////////
     void forceSendNonQueuedTcpMessage(
         ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
@@ -488,32 +490,14 @@ private:
     );
 
     ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send the header of a message in the queue
+    /// \brief Send a message in the queue
     ///
-    /// Once sent, if the body is not empty, it is automatically sent as well
-    //
-    /// \param bytesAlreadySent Allows for sending over multiple packet
-    ///                         already sent with previous calls
+    /// \param message Message to send
     /// \param successCallback Function, lambda or class called on success
-    //
-    ///////////////////////////////////////////////////////////////////////////
-    void sendTcpMessageHeader(
-        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
-        , ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
-        , ::std::size_t bytesAlreadySent = 0
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send the body of a message in the queue
+    /// \param bytesAlreadySent Allows to send a message over multiple packet
     ///
-    /// The header of this message must has already been sent
-    ///
-    /// \param bytesAlreadySent Allows for sending over multiple packet
-    ///                         already sent with previous calls
-    /// \param successCallback Function, lambda or class called on success
-    //
     ///////////////////////////////////////////////////////////////////////////
-    void sendTcpMessageBody(
+    void sendTcpMessage(
         ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
         , ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
         , ::std::size_t bytesAlreadySent = 0
@@ -531,39 +515,13 @@ private:
     ///
     /// \warning must call m_tcpBufferInLocker.unlock() to release the
     /// buffer once received
-    //
+    ///
     /// \param successCallback Function, lambda or class called on success
+    /// \param bytesAlreadyReceived Allows to receive a message over multiple
+    /// packet
     ///
     ///////////////////////////////////////////////////////////////////////////
     void receiveTcpMessage(
-        ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Receive the header of a message in the queue
-    ///
-    /// Once sent, if the body is not empty, it is automatically received as
-    /// well
-    //
-    /// \param bytesAlreadySent Allows to receive message over multiple packet
-    /// \param successCallback Function, lambda or class called on success
-    //
-    ///////////////////////////////////////////////////////////////////////////
-    void receiveTcpMessageHeader(
-        ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
-        , ::std::size_t bytesAlreadyReceived = 0
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send the body of a message in the queue
-    ///
-    /// The header of this message must has already been received
-    ///
-    /// \param bytesAlreadyReceived Allows to receive message over multiple packet
-    /// \param successCallback Function, lambda or class called on success
-    //
-    ///////////////////////////////////////////////////////////////////////////
-    void receiveTcpMessageBody(
         ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
         , ::std::size_t bytesAlreadyReceived = 0
     );
@@ -582,9 +540,9 @@ private:
     ///
     /// Sends the message in front of the queue. Once sent, the message is
     /// deleted
-    //
+    ///
     /// \param successCallback Function, lambda or class called on success
-    //
+    ///
     ///////////////////////////////////////////////////////////////////////////
     void sendUdpQueueMessage(
         ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
@@ -595,9 +553,9 @@ private:
     ///
     /// Sends the message in front of the queue. Once sent, the message is
     /// deleted. Skip the check of m_isSendingAllowed
-    //
+    ///
     /// \param successCallback Function, lambda or class called on success
-    //
+    ///
     ///////////////////////////////////////////////////////////////////////////
     void forceSendUdpQueueMessage(
         ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
@@ -609,9 +567,10 @@ private:
     /// Same as sendNonQueuedUdpMessage(), but does not copy the message, but
     /// sends the message in front of the queue
     /// Once sent, the message is deleted
-    //
+    ///
+    /// \param message Message to send
     /// \param successCallback Function, lambda or class called on success
-    //
+    ///
     ///////////////////////////////////////////////////////////////////////////
     void sendNonQueuedUdpMessage(
         ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
@@ -625,9 +584,10 @@ private:
     /// sends the message in front of the queue
     /// Once sent, the message is deleted
     /// Skip the check of m_isSendingAllowed
-    //
+    ///
+    /// \param message Message to send
     /// \param successCallback Function, lambda or class called on success
-    //
+    ///
     ///////////////////////////////////////////////////////////////////////////
     void forceSendNonQueuedUdpMessage(
         ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
@@ -638,29 +598,13 @@ private:
     /// \brief Send the header of a message in the queue
     ///
     /// Once sent, if the body is not empty, it is automatically sent as well
-    //
-    /// \param bytesAlreadySent Allows for sending over multiple packet
-    ///                         already sent with previous calls
-    /// \param successCallback Function, lambda or class called on success
-    //
-    ///////////////////////////////////////////////////////////////////////////
-    void sendUdpMessageHeader(
-        ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
-        , ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
-        , ::std::size_t bytesAlreadySent = 0
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send the body of a message in the queue
     ///
-    /// The header of this message must has already been sent
-    ///
-    /// \param bytesAlreadySent Allows for sending over multiple packet
-    ///                         already sent with previous calls
+    /// \param message Message to send
     /// \param successCallback Function, lambda or class called on success
-    //
+    /// \param bytesAlreadySent Allows to send a message over multiple packet
+    ///
     ///////////////////////////////////////////////////////////////////////////
-    void sendUdpMessageBody(
+    void sendUdpMessage(
         ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
         , ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
         , ::std::size_t bytesAlreadySent = 0
@@ -678,39 +622,13 @@ private:
     ///
     /// \warning must call m_udpBufferInLocker.unlock() to release the
     /// buffer once received
-    //
+    ///
     /// \param successCallback Function, lambda or class called on success
+    /// \param bytesAlreadyReceived Allows to receive a message over multiple
+    /// packet
     ///
     ///////////////////////////////////////////////////////////////////////////
     void receiveUdpMessage(
-        ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Receive the header of a message in the queue
-    ///
-    /// Once sent, if the body is not empty, it is automatically received as
-    /// well
-    //
-    /// \param bytesAlreadySent Allows to receive message over multiple packet
-    /// \param successCallback Function, lambda or class called on success
-    //
-    ///////////////////////////////////////////////////////////////////////////
-    void receiveUdpMessageHeader(
-        ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
-        , ::std::size_t bytesAlreadyReceived = 0
-    );
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Send the body of a message in the queue
-    ///
-    /// The header of this message must has already been received
-    ///
-    /// \param bytesAlreadyReceived Allows to receive message over multiple packet
-    /// \param successCallback Function, lambda or class called on success
-    //
-    ///////////////////////////////////////////////////////////////////////////
-    void receiveUdpMessageBody(
         ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
         , ::std::size_t bytesAlreadyReceived = 0
     );

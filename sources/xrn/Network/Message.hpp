@@ -163,24 +163,6 @@ public:
         UserEnum messageType
     ) noexcept;
 
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Constructor for a system message
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    explicit Message(
-        Message::SystemType messageType
-        , auto&&... args
-    ) noexcept;
-
-    ///////////////////////////////////////////////////////////////////////////
-    /// \brief Constructor for a user message
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    explicit Message(
-        UserEnum messageType
-        , auto&&... args
-    ) noexcept;
-
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -427,7 +409,7 @@ private:
     /// \brief Contains row data as bytes
     ///
     ////////////////////////////////////////////////////////////
-    ::std::array<::std::byte, Message::maxSize> m_packet;
+    ::std::array<::std::byte, Message::maxSize> m_message;
 
     ////////////////////////////////////////////////////////////
     /// \brief Contains information about the content of the body
@@ -435,7 +417,7 @@ private:
     /// header is contained at the begining of the packet
     ///
     ////////////////////////////////////////////////////////////
-    Message::Header& m_header{ *new (m_packet.data()) Message::Header };
+    Message::Header& m_header{ *new (m_message.data()) Message::Header };
 
     ////////////////////////////////////////////////////////////
     /// \brief Index inside the vector to pull out data

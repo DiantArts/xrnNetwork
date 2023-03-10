@@ -161,12 +161,9 @@ template <
     auto&&... args
 )
 {
-    m_connection->tcpSend(
-        ::std::make_unique<::xrn::network::Message<UserEnum>>(
-            messageType
-            , ::std::forward<decltype(args)>(args)...
-        )
-    );
+    auto message{ ::std::make_unique<::xrn::network::Message<UserEnum>>( messageType ) };
+    (*message << ... << ::std::forward<decltype(args)>(args));
+    m_connection->tcpSend(::std::move(message));
 }
 
 ///////////////////////////////////////////////////////////////////////////

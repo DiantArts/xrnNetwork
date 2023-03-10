@@ -114,8 +114,9 @@ template <
 {
     if (message->getType() == UserEnum::message) {
         XRN_DEBUG("Preparing to print pull");
-        auto id{ message->template pull<::xrn::Id>() };
-        auto string{ message->template pull<::std::string>() };
+        ::xrn::Id id;
+        ::std::string string;
+        *message >> id >> string;
         XRN_DEBUG("{} <- '{}'", id, string);
         message->resetPullPosition();
     }
@@ -198,8 +199,9 @@ template <
     }
     if (message->getMessage()->getType() == UserEnum::message) {
         XRN_DEBUG("Preparing to print pull");
-        auto id{ message->getMessage()->template pull<::xrn::Id>() };
-        auto string{ message->getMessage()->template pull<::std::string>() };
+        ::xrn::Id id;
+        ::std::string string;
+        *message->getMessage() >> id >> string;
         XRN_DEBUG("{} <- '{}'", id, string);
         message->getMessage()->resetPullPosition();
     }

@@ -12,6 +12,26 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > ::xrn::network::Message<UserEnum>::Message() noexcept = default;
 
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> ::xrn::network::Message<UserEnum>::Message(
+    Message::SystemType messageType
+) noexcept
+{
+    m_header.messageType = static_cast<decltype(Message::Header::messageType)>(messageType);
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> ::xrn::network::Message<UserEnum>::Message(
+    UserEnum messageType
+) noexcept
+{
+    m_header.messageType = static_cast<decltype(Message::Header::messageType)>(messageType);
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,7 +102,7 @@ template <
         , m_header.bodySize
         , Message::maxSize
     );
-    ::std::memcpy(m_packet.data() + this->getSize(), &data, sizeof(data));
+    ::std::memcpy(m_message.data() + this->getSize(), &data, sizeof(data));
     m_header.bodySize += sizeof(data);
 }
 
@@ -100,7 +120,7 @@ template <
         , m_header.bodySize
         , Message::maxSize
     );
-    ::std::memmove(m_packet.data() + this->getSize(), &data, sizeof(data));
+    ::std::memmove(m_message.data() + this->getSize(), &data, sizeof(data));
     m_header.bodySize += sizeof(data);
 }
 
@@ -119,7 +139,7 @@ template <
         , m_header.bodySize
         , Message::maxSize
     );
-    ::std::memcpy(m_packet.data() + this->getSize(), ptr, size);
+    ::std::memcpy(m_message.data() + this->getSize(), ptr, size);
     m_header.bodySize += size;
 }
 
@@ -138,7 +158,7 @@ template <
         , m_header.bodySize
         , Message::maxSize
     );
-    ::std::memcpy(m_packet.data() + this->getSize(), ptr, static_cast<::std::size_t>(size));
+    ::std::memcpy(m_message.data() + this->getSize(), ptr, static_cast<::std::size_t>(size));
     m_header.bodySize += size;
 }
 
@@ -157,7 +177,7 @@ template <
         , m_header.bodySize
         , Message::maxSize
     );
-    ::std::memmove(m_packet.data() + this->getSize(), ptr, size);
+    ::std::memmove(m_message.data() + this->getSize(), ptr, size);
     m_header.bodySize += size;
 }
 
@@ -176,7 +196,7 @@ template <
         , m_header.bodySize
         , Message::maxSize
     );
-    ::std::memmove(m_packet.data() + this->getSize(), ptr, static_cast<::std::size_t>(size));
+    ::std::memmove(m_message.data() + this->getSize(), ptr, static_cast<::std::size_t>(size));
     m_header.bodySize += size;
 }
 
@@ -195,7 +215,7 @@ template <
         , sizeof(T)
         , m_header.bodySize
     );
-    auto& data = *::std::bit_cast<T*>(m_packet.data() + m_pullPointer);
+    auto& data = *::std::bit_cast<T*>(m_message.data() + m_pullPointer);
     m_pullPointer += sizeof(T);
     return data;
 }
@@ -216,7 +236,7 @@ template <
         , size
         , this->getSize()
     );
-    auto* ptr = ::std::bit_cast<T*>(m_packet.data() + m_pullPointer);
+    auto* ptr = ::std::bit_cast<T*>(m_message.data() + m_pullPointer);
     m_pullPointer += size;
     return ptr;
 }
@@ -237,7 +257,7 @@ template <
         , size
         , this->getSize()
     );
-    auto* ptr = ::std::bit_cast<T*>(m_packet.data() + m_pullPointer);
+    auto* ptr = ::std::bit_cast<T*>(m_message.data() + m_pullPointer);
     m_pullPointer += static_cast<::std::size_t>(size);
     return ptr;
 }
@@ -274,7 +294,7 @@ template <
 > auto ::xrn::network::Message<UserEnum>::getAddr()
     -> ::std::byte*
 {
-    return m_packet.data();
+    return m_message.data();
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -283,7 +303,7 @@ template <
 > auto ::xrn::network::Message<UserEnum>::getSize() const
     -> ::std::size_t
 {
-    return m_header.bodySize + Message::getHeaderSize();
+    return Message::getHeaderSize() + m_header.bodySize;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -310,7 +330,7 @@ template <
 > auto ::xrn::network::Message<UserEnum>::getAsString() const
     -> ::std::string
 {
-    return { ::std::bit_cast<char*>(m_packet.data()), m_header.bodySize };
+    return { ::std::bit_cast<char*>(m_message.data()), m_header.bodySize };
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -366,6 +386,35 @@ template <
     -> ::xrn::network::Message<UserEnum>&
 {
     data = message.template pull<int>();
+    return message;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Overload declaration: ::xrn::Id
+//
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto operator<<(::xrn::network::Message<UserEnum>& message, ::xrn::Id data)
+    -> ::xrn::network::Message<UserEnum>&
+{
+    message.push(data);
+    return message;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto operator>>(::xrn::network::Message<UserEnum>& message, ::xrn::Id& data)
+    -> ::xrn::network::Message<UserEnum>&
+{
+    data = message.template pull<::xrn::Id>();
     return message;
 }
 

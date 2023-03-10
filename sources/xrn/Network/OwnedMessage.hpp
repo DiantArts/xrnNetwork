@@ -16,27 +16,10 @@ namespace xrn::network {
 namespace xrn::network {
 
 ///////////////////////////////////////////////////////////////////////////
-/// \brief Allows to dynamically store polymorphic data so it can be sent
+/// \brief Combinaison of a message and a connection
 /// \ingroup network
 ///
 /// \include OwnedMessage.hpp <xrn/Network/OwnedMessage.hpp>
-///
-/// ::xrn::network::OwnedMessage's purpuse is simplify data sharing by providing
-/// a simple way to regroup and act onto multiple polymorphic data into a
-/// single object. This message works like a queue (FIFO)
-///
-/// Usage example:
-/// \code
-/// enum MessageType { start, stop, last };
-/// ::xrn::network::OwnedMessage<MessageType> m{ MessageType::start, "hello", "you"s, "are"sv };
-/// ::std::vector<short> vec{ 5, 3 };
-/// m.push(::std::move(vec));
-/// auto str1{ m.pull<char*>() };
-/// auto str2{ m.pull<char*>() };
-/// auto str3{ m.pull<char*>() };
-/// auto v1{ m.pull<short*>() };
-/// ::fmt::print("{} {} {} {} {} {}\n", str1, str2, str3, v1.size(), v1[0], v1[1]); // output: hello you are 2 5 3
-/// \endcode
 ///
 ///
 ///////////////////////////////////////////////////////////////////////////
