@@ -252,7 +252,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void pushCopy(
-        auto* data
+        auto* ptr
         , ::std::size_t size
     );
 
@@ -263,7 +263,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void pushCopy(
-        auto* data
+        auto* ptr
         , Message::SizeType size
     );
 
@@ -274,7 +274,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void pushMove(
-        auto* data
+        auto* ptr
         , ::std::size_t size
     );
 
@@ -285,7 +285,7 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////
     void pushMove(
-        auto* data
+        auto* ptr
         , Message::SizeType size
     );
 

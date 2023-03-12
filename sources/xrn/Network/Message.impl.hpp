@@ -54,7 +54,16 @@ template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > ::xrn::network::Message<UserEnum>::Message(
     const Message& that
-) noexcept = default;
+) noexcept
+{
+    // manual copy because copy constructor does not work
+    ::std::memcpy(
+        m_message.data()
+        , that.m_message.data()
+        , sizeof(*m_message.data()) * m_message.size()
+    );
+    XRN_DEBUG("Message copy constructed");
+}
 
 ///////////////////////////////////////////////////////////////////////////
 template <
@@ -62,14 +71,33 @@ template <
 > auto ::xrn::network::Message<UserEnum>::operator=(
     const Message& that
 ) noexcept
-    -> Message& = default;
+    -> Message&
+{
+    // manual copy because copy constructor does not work
+    ::std::memcpy(
+        m_message.data()
+        , that.m_message.data()
+        , sizeof(*m_message.data()) * m_message.size()
+    );
+    XRN_DEBUG("Message copy assigned");
+    return *this;
+}
 
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > ::xrn::network::Message<UserEnum>::Message(
     Message&& that
-) noexcept = default;
+) noexcept
+{
+    // manual copy because copy constructor does not work
+    ::std::memmove(
+        m_message.data()
+        , that.m_message.data()
+        , sizeof(*m_message.data()) * m_message.size()
+    );
+    XRN_DEBUG("Message move constructed");
+}
 
 ///////////////////////////////////////////////////////////////////////////
 template <
@@ -77,7 +105,17 @@ template <
 > auto ::xrn::network::Message<UserEnum>::operator=(
     Message&& that
 ) noexcept
-    -> Message& = default;
+    -> Message&
+{
+    // manual copy because copy constructor does not work
+    ::std::memmove(
+        m_message.data()
+        , that.m_message.data()
+        , sizeof(*m_message.data()) * m_message.size()
+    );
+    XRN_DEBUG("Message move assigned");
+    return *this;
+}
 
 
 
@@ -97,7 +135,8 @@ template <
 {
     XRN_ASSERT(
         sizeof(data) + m_header.bodySize < Message::maxSize
-        , "Cannot push futher than Message::maxSize ({} + {} < {})"
+        , "Cannot push futher than Message::maxSize ({}) ({} + {} < {})"
+        , m_header.bodySize + sizeof(data)
         , sizeof(data)
         , m_header.bodySize
         , Message::maxSize
@@ -115,7 +154,8 @@ template <
 {
     XRN_ASSERT(
         sizeof(data) + m_header.bodySize < Message::maxSize
-        , "Cannot push futher than Message::maxSize ({} + {} < {})"
+        , "Cannot push futher than Message::maxSize ({}) ({} + {} < {})"
+        , m_header.bodySize + sizeof(data)
         , sizeof(data)
         , m_header.bodySize
         , Message::maxSize
@@ -133,14 +173,16 @@ template <
 )
 {
     XRN_ASSERT(
-        size + m_header.bodySize < Message::maxSize
-        , "Cannot push futher than Message::maxSize ({} + {} < {})"
-        , size
+        m_header.bodySize * (size * sizeof(*ptr)) < Message::maxSize
+        , "Cannot push futher than Message::maxSize ({}) ({} + ({} * {}) < {})"
+        , m_header.bodySize + size * sizeof(*ptr)
         , m_header.bodySize
+        , size
+        , sizeof(*ptr)
         , Message::maxSize
     );
-    ::std::memcpy(m_message.data() + this->getSize(), ptr, size);
-    m_header.bodySize += size;
+    ::std::memcpy(m_message.data() + this->getSize(), ptr, size * sizeof(*ptr));
+    m_header.bodySize += size * sizeof(*ptr);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -152,14 +194,16 @@ template <
 )
 {
     XRN_ASSERT(
-        size + m_header.bodySize < Message::maxSize
-        , "Cannot push futher than Message::maxSize ({} + {} < {})"
-        , size
+        m_header.bodySize * (size * sizeof(*ptr)) < Message::maxSize
+        , "Cannot push futher than Message::maxSize ({}) ({} + ({} * {}) < {})"
+        , m_header.bodySize + size * sizeof(*ptr)
         , m_header.bodySize
+        , size
+        , sizeof(*ptr)
         , Message::maxSize
     );
-    ::std::memcpy(m_message.data() + this->getSize(), ptr, static_cast<::std::size_t>(size));
-    m_header.bodySize += size;
+    ::std::memcpy(m_message.data() + this->getSize(), ptr, size * sizeof(*ptr));
+    m_header.bodySize += size * sizeof(*ptr);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -171,14 +215,16 @@ template <
 )
 {
     XRN_ASSERT(
-        size + m_header.bodySize < Message::maxSize
-        , "Cannot push futher than Message::maxSize ({} + {} < {})"
-        , size
+        m_header.bodySize * (size * sizeof(*ptr)) < Message::maxSize
+        , "Cannot push futher than Message::maxSize ({}) ({} + ({} * {}) < {})"
+        , m_header.bodySize + size * sizeof(*ptr)
         , m_header.bodySize
+        , size
+        , sizeof(*ptr)
         , Message::maxSize
     );
-    ::std::memmove(m_message.data() + this->getSize(), ptr, size);
-    m_header.bodySize += size;
+    ::std::memmove(m_message.data() + this->getSize(), ptr, size * sizeof(*ptr));
+    m_header.bodySize += size * sizeof(*ptr);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -190,14 +236,16 @@ template <
 )
 {
     XRN_ASSERT(
-        size + m_header.bodySize < Message::maxSize
-        , "Cannot push futher than Message::maxSize ({} + {} < {})"
-        , size
+        m_header.bodySize * (size * sizeof(*ptr)) < Message::maxSize
+        , "Cannot push futher than Message::maxSize ({}) ({} + ({} * {}) < {})"
+        , m_header.bodySize + size * sizeof(*ptr)
         , m_header.bodySize
+        , size
+        , sizeof(*ptr)
         , Message::maxSize
     );
-    ::std::memmove(m_message.data() + this->getSize(), ptr, static_cast<::std::size_t>(size));
-    m_header.bodySize += size;
+    ::std::memmove(m_message.data() + this->getSize(), ptr, size * sizeof(*ptr));
+    m_header.bodySize += size * sizeof(*ptr);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -209,11 +257,12 @@ template <
     -> T&
 {
     XRN_ASSERT(
-        m_pullPointer + sizeof(T) <= m_header.bodySize
-        , "Cannot pull further than bodySize ({} + {} < {})"
+        m_pullPointer + sizeof(T) <= this->getSize()
+        , "Cannot pull further than bodySize ({}) ({} + {} <= {})"
+        , m_pullPointer + sizeof(T) - this->getHeaderSize()
         , m_pullPointer
         , sizeof(T)
-        , m_header.bodySize
+        , this->getSize()
     );
     auto& data = *::std::bit_cast<T*>(m_message.data() + m_pullPointer);
     m_pullPointer += sizeof(T);
@@ -230,14 +279,16 @@ template <
 ) -> T*
 {
     XRN_ASSERT(
-        m_pullPointer + size <= this->getSize()
-        , "Cannot pull further than bodySize ({} + {} < {})"
+        m_pullPointer + (size * sizeof(T)) <= this->getSize()
+        , "Cannot pull further than bodySize ({}) ({} + ({} * {}) <= {})"
+        , m_pullPointer + (size * sizeof(T)) - this->getHeaderSize()
         , m_pullPointer
         , size
+        , sizeof(T)
         , this->getSize()
     );
     auto* ptr = ::std::bit_cast<T*>(m_message.data() + m_pullPointer);
-    m_pullPointer += size;
+    m_pullPointer += (size * sizeof(T));
     return ptr;
 }
 
@@ -251,14 +302,16 @@ template <
 ) -> T*
 {
     XRN_ASSERT(
-        m_pullPointer + size <= this->getSize()
-        , "Cannot pull further than bodySize ({} + {} < {})"
+        m_pullPointer + (size * sizeof(T)) <= this->getSize()
+        , "Cannot pull further than bodySize ({}) ({} + ({} * {}) <= {})"
+        , m_pullPointer + size * sizeof(T) - this->getHeaderSize()
         , m_pullPointer
         , size
+        , sizeof(T)
         , this->getSize()
     );
     auto* ptr = ::std::bit_cast<T*>(m_message.data() + m_pullPointer);
-    m_pullPointer += static_cast<::std::size_t>(size);
+    m_pullPointer += size * sizeof(T);
     return ptr;
 }
 
@@ -512,11 +565,46 @@ template <
 ///////////////////////////////////////////////////////////////////////////
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto operator<<(::xrn::network::Message<UserEnum>& message, const ::std::string_view& str)
+    -> ::xrn::network::Message<UserEnum>&
+{
+    using SizeType = typename ::xrn::network::Message<UserEnum>::SizeType;
+    message.template push<SizeType>(static_cast<SizeType>(str.size()));
+    message.pushCopy(str.data(), str.size());
+    return message;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto operator<<(::xrn::network::Message<UserEnum>& message, const char* str)
+    -> ::xrn::network::Message<UserEnum>&
+{
+    message << ::std::string{ str };
+    return message;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
 > auto operator>>(::xrn::network::Message<UserEnum>& message, ::std::string& str)
     -> ::xrn::network::Message<UserEnum>&
 {
     using SizeType = typename ::xrn::network::Message<UserEnum>::SizeType;
     str.resize(static_cast<::std::size_t>(message.template pull<SizeType>()));
     str.assign(message.template pull<char>(str.size()), str.size());
+    return message;
+}
+
+///////////////////////////////////////////////////////////////////////////
+template <
+    ::xrn::network::detail::constraint::isValidEnum UserEnum
+> auto operator>>(::xrn::network::Message<UserEnum>& message, ::std::string_view& str)
+    -> ::xrn::network::Message<UserEnum>&
+{
+    using SizeType = typename ::xrn::network::Message<UserEnum>::SizeType;
+    auto size{ static_cast<::std::size_t>(message.template pull<SizeType>()) };
+    auto* ptr{ message.template pull<char>(size) };
+    str = ::std::string_view{ ptr, size };
     return message;
 }

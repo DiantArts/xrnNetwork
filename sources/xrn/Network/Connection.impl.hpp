@@ -716,7 +716,7 @@ template <
     };
 
     XRN_DEBUG(
-        "TCP{} -> Request (size:{};Sent:{})"
+        "TCP{} -> Request (Size:{};Sent:{})"
         , m_id
         , m_tcpBufferIn->getSize() - bytesAlreadySent
         , bytesAlreadySent
@@ -807,7 +807,7 @@ template <
     };
 
     XRN_DEBUG(
-        "TCP{} <- Request (size:{};Received{})"
+        "TCP{} <- Request (Size:{};Received::{})"
         , m_id
         , m_tcpBufferIn->getSize() - bytesAlreadyReceived
         , bytesAlreadyReceived
@@ -962,7 +962,7 @@ template <
     };
 
     XRN_DEBUG(
-        "UDP{} -> Request (size:{};Sent:{})"
+        "UDP{} -> Request (Size:{};Sent:{})"
         , m_id
         , m_udpBufferIn->getSize() - bytesAlreadySent
         , bytesAlreadySent
@@ -1053,7 +1053,7 @@ template <
     };
 
     XRN_DEBUG(
-        "UDP{} <- Request (size:{};Received{})"
+        "UDP{} <- Request (Size:{};Received::{})"
         , m_id
         , m_udpBufferIn->getSize() - bytesAlreadyReceived
         , bytesAlreadyReceived
