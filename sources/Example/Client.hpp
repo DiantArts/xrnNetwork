@@ -22,7 +22,9 @@ public:
         const ::std::string& str
     )
     {
-        this->tcpSendToServer(::example::MessageType::message, m_connection->getId(), str);
+        auto message{ ::std::make_unique<::xrn::network::Message<::example::MessageType>>(::example::MessageType::message) };
+        *message << m_connection->getId() << str;
+        this->tcpSendToServer(::std::move(message));
     }
 
     virtual void onReceive(
@@ -45,14 +47,6 @@ public:
         ::std::shared_ptr<::xrn::network::Connection<::example::MessageType>> connection
     ) -> bool override
     {
-        if (message.getType() == ::example::MessageType::message) {
-            XRN_DEBUG("Preparing to print pull");
-            ::xrn::Id id;
-            ::std::string string;
-            message >> id >> string;
-            XRN_DEBUG("{} <- '{}'", id, string);
-            message.resetPullPosition();
-        }
         switch (message.getType()) {
         default: {
             ::std::string string;

@@ -112,14 +112,6 @@ template <
     , ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
 )
 {
-    if (message->getType() == UserEnum::message) {
-        XRN_DEBUG("Preparing to print pull");
-        ::xrn::Id id;
-        ::std::string string;
-        *message >> id >> string;
-        XRN_DEBUG("{} <- '{}'", id, string);
-        message->resetPullPosition();
-    }
     m_messagesIn.push_back(::std::make_unique<::xrn::network::OwnedMessage<UserEnum>>(
         connection, ::std::move(message)
     ));
@@ -196,14 +188,6 @@ template <
     auto message{ m_messagesIn.pop_front() };
     if (this->handleIncommingSystemMessages(message->getOwner(), *message->getMessage())) {
         return;
-    }
-    if (message->getMessage()->getType() == UserEnum::message) {
-        XRN_DEBUG("Preparing to print pull");
-        ::xrn::Id id;
-        ::std::string string;
-        *message->getMessage() >> id >> string;
-        XRN_DEBUG("{} <- '{}'", id, string);
-        message->getMessage()->resetPullPosition();
     }
     message->getMessage()->resetPullPosition();
     this->onReceive(*message->getMessage(), message->getOwner());

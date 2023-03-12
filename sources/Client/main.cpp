@@ -39,14 +39,6 @@ auto main(
                 client.messageServer(str);
             }
         }
-
-        // auto message{ ::std::make_unique<::xrn::network::Message<::example::MessageType>>(::example::MessageType::message) };
-        // *message << client.getConnectionId() << "yes";
-        // XRN_DEBUG("{} -> '{}'", message->template pull<::xrn::Id>(), message->template pull<::std::string>());
-        // message->resetPullPosition();
-        // client.udpSendToServer(::std::move(message));
-        // ::std::this_thread::sleep_for(100ms);
-        // client.messageServer("yes");
     }
 ExitWhile:
 

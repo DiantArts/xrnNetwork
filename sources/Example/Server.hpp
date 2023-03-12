@@ -22,14 +22,6 @@ public:
         ::std::shared_ptr<::xrn::network::Connection<::example::MessageType>> connection
     ) override
     {
-        if (message.getType() == ::example::MessageType::message) {
-            XRN_DEBUG("Preparing to print pull");
-            ::xrn::Id id;
-            ::std::string string;
-            message >> id >> string;
-            XRN_DEBUG("{} <- '{}'", id, string);
-            message.resetPullPosition();
-        }
         switch (message.getType()) {
         default: {
             ::xrn::Id id;
@@ -49,14 +41,6 @@ public:
         ::std::shared_ptr<::xrn::network::Connection<::example::MessageType>> connection
     ) -> bool override
     {
-        if (message.getType() == ::example::MessageType::message) {
-            XRN_DEBUG("Preparing to print pull");
-            ::xrn::Id id;
-            ::std::string string;
-            message >> id >> string;
-            XRN_DEBUG("{} <- '{}'", id, string);
-            message.resetPullPosition();
-        }
         switch (message.getType()) {
         default: {
             ::xrn::Id id;
