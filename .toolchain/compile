@@ -28,8 +28,8 @@ binaryName=xrnNetwork_client
 binaryName2=xrnNetwork_server
 binaryPath=${buildDir}/sources/bin/${binaryName}
 binaryPath2=${buildDir}/sources/bin/${binaryName2}
-argv1="127.0.0.1 8080"
-argv2="8080"
+argv1="127.0.0.1 8082"
+argv2="8082"
 parallel=$(nproc)
 
 # -------------------------------------------------------------------------------------------------

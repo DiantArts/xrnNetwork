@@ -115,7 +115,7 @@ template <
         ) {
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_WARNING("TCP Connection canceled");
+                    XRN_DEBUG("TCP Connection canceled");
                 } else {
                     XRN_ERROR(
                         "TCP{} Failed to connect to {}:{}: {}"
@@ -262,7 +262,7 @@ template <
 {
     message->resetPullPosition();
     if (!m_owner.onSend(*message, this->shared_from_this())) {
-        XRN_WARNING("TCP Send canceled");
+        XRN_DEBUG("TCP Send canceled");
         return;
     }
 
@@ -279,7 +279,7 @@ template <
 {
     message->resetPullPosition();
     if (!m_owner.onSend(*message, this->shared_from_this())) {
-        XRN_WARNING("TCP Send canceled");
+        XRN_DEBUG("TCP Send canceled");
         return;
     }
 
@@ -389,10 +389,10 @@ template <
 
     m_udpSocket.async_connect(
         ::asio::ip::udp::endpoint{ ::asio::ip::address::from_string(host), port },
-        [=](const ::std::error_code& errCode) {
+        [this, &host, &port](const ::std::error_code& errCode) {
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_WARNING("UDP Target canceled");
+                    XRN_DEBUG("UDP Target canceled");
                 } else if (errCode == ::asio::error::eof) {
                     XRN_LOG("UDP{} Connection closed", m_id);
                     this->disconnect();
@@ -417,7 +417,7 @@ template <
 )
 {
     if (!m_owner.onSend(*message, this->shared_from_this())) {
-        XRN_WARNING("UDP Send canceled");
+        XRN_DEBUG("UDP Send canceled");
         return;
     }
 
@@ -434,7 +434,7 @@ template <
 {
     message->resetPullPosition();
     if (!m_owner.onSend(*message, this->shared_from_this())) {
-        XRN_WARNING("UDP Send canceled");
+        XRN_DEBUG("UDP Send canceled");
         return;
     }
 
@@ -625,7 +625,7 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::Connection<UserEnum>::sendTcpMessage(
-    ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
+    ::std::unique_ptr<::xrn::network::Message<UserEnum>> messageToSend
     , ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
     , ::std::size_t bytesAlreadySent // = 0
 )
@@ -641,7 +641,7 @@ template <
             // error handling
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_WARNING("TCP Send canceled");
+                    XRN_DEBUG("TCP Send canceled");
                 } else if (errCode == ::asio::error::eof) {
                     XRN_LOG("TCP{} Connection closed", m_id);
                     this->disconnect();
@@ -679,18 +679,17 @@ template <
         }
     };
 
+    const auto addr{ messageToSend->getAddr() };
+    const auto size{ messageToSend->getSize() };
     XRN_DEBUG(
         "TCP{} -> Request (Size:{};Sent:{})"
         , m_id
-        , message->getSize() - bytesAlreadySent
+        , size - bytesAlreadySent
         , bytesAlreadySent
     );
     m_tcpSocket.async_send(
-        ::asio::buffer(
-            message->getAddr() + bytesAlreadySent
-            , message->getSize() - bytesAlreadySent
-        )
-        , ::std::bind_front(lambda, ::std::move(message))
+        ::asio::buffer(addr + bytesAlreadySent, size - bytesAlreadySent)
+        , ::std::bind_front(lambda, ::std::move(messageToSend))
     );
 }
 
@@ -712,7 +711,7 @@ template <
             // error handling
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_WARNING("TCP Receive canceled");
+                    XRN_DEBUG("TCP Receive canceled");
                 } else if (errCode == ::asio::error::eof) {
                     XRN_LOG("TCP{} Connection closed", m_id);
                     this->disconnect();
@@ -870,7 +869,7 @@ template <
 template <
     ::xrn::network::detail::constraint::isValidEnum UserEnum
 > void ::xrn::network::Connection<UserEnum>::sendUdpMessage(
-    ::std::unique_ptr<::xrn::network::Message<UserEnum>> message
+    ::std::unique_ptr<::xrn::network::Message<UserEnum>> messageToSend
     , ::xrn::meta::constraint::doesCallableHasParameters<> auto successCallback
     , ::std::size_t bytesAlreadySent // = 0
 )
@@ -886,7 +885,7 @@ template <
             // error handling
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_WARNING("UDP Send canceled");
+                    XRN_DEBUG("UDP Send canceled");
                 } else if (errCode == ::asio::error::eof) {
                     XRN_LOG("UDP{} Connection closed", m_id);
                     this->disconnect();
@@ -924,18 +923,17 @@ template <
         }
     };
 
+    const auto addr{ messageToSend->getAddr() };
+    const auto size{ messageToSend->getSize() };
     XRN_DEBUG(
         "UDP{} -> Request (Size:{};Sent:{})"
         , m_id
-        , message->getSize() - bytesAlreadySent
+        , messageToSend->getSize() - bytesAlreadySent
         , bytesAlreadySent
     );
     m_udpSocket.async_send(
-        ::asio::buffer(
-            message->getAddr() + bytesAlreadySent
-            , message->getSize() - bytesAlreadySent
-        )
-        , ::std::bind_front(lambda, ::std::move(message))
+        ::asio::buffer(addr + bytesAlreadySent, size - bytesAlreadySent)
+        , ::std::bind_front(lambda, ::std::move(messageToSend))
     );
 }
 
@@ -957,7 +955,7 @@ template <
             // error handling
             if (errCode) {
                 if (errCode == ::asio::error::operation_aborted) {
-                    XRN_WARNING("UDP Receive canceled");
+                    XRN_DEBUG("UDP Receive canceled");
                 } else if (errCode == ::asio::error::eof) {
                     XRN_LOG("UDP{} Connection closed", m_id);
                     this->disconnect();

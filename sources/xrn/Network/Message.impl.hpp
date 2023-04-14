@@ -142,7 +142,7 @@ template <
         , Message::maxSize
     );
     ::std::memcpy(m_message.data() + this->getSize(), &data, sizeof(data));
-    m_header.bodySize += sizeof(data);
+    m_header.bodySize += static_cast<::std::uint16_t>(sizeof(data));
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -161,7 +161,7 @@ template <
         , Message::maxSize
     );
     ::std::memmove(m_message.data() + this->getSize(), &data, sizeof(data));
-    m_header.bodySize += sizeof(data);
+    m_header.bodySize += static_cast<::std::uint16_t>(sizeof(data));
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -182,7 +182,7 @@ template <
         , Message::maxSize
     );
     ::std::memcpy(m_message.data() + this->getSize(), ptr, size * sizeof(*ptr));
-    m_header.bodySize += size * sizeof(*ptr);
+    m_header.bodySize += static_cast<::std::uint16_t>(size * sizeof(*ptr));
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -203,7 +203,7 @@ template <
         , Message::maxSize
     );
     ::std::memcpy(m_message.data() + this->getSize(), ptr, size * sizeof(*ptr));
-    m_header.bodySize += size * sizeof(*ptr);
+    m_header.bodySize += static_cast<::std::uint16_t>(size * sizeof(*ptr));
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -224,7 +224,7 @@ template <
         , Message::maxSize
     );
     ::std::memmove(m_message.data() + this->getSize(), ptr, size * sizeof(*ptr));
-    m_header.bodySize += size * sizeof(*ptr);
+    m_header.bodySize += static_cast<::std::uint16_t>(size * sizeof(*ptr));
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -245,7 +245,7 @@ template <
         , Message::maxSize
     );
     ::std::memmove(m_message.data() + this->getSize(), ptr, size * sizeof(*ptr));
-    m_header.bodySize += size * sizeof(*ptr);
+    m_header.bodySize += static_cast<::std::uint16_t>(size * sizeof(*ptr));
 }
 
 ///////////////////////////////////////////////////////////////////////////

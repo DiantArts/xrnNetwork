@@ -16,6 +16,10 @@ auto main(
     , char** argv
 ) -> int
 {
+    // auto message{ ::std::make_unique<::xrn::network::Message<::example::MessageType>>(::example::MessageType::message) };
+    // *message << 5;
+    // ::fmt::print("{}\n", message->getSize());
+    // return 0;
     XRN_FATAL_SASSERT(argc == 3, "Usage: client <host> {}", argc);
     ::example::Client client{
         argv[1],
