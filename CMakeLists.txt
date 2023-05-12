@@ -33,6 +33,8 @@ set(XRN_OUTPUT_DIR "binaries")
 set(XRN_SHADERS_DIR "shaders")
 set(XRN_FRAGMENTS_DIR "Fragment")
 set(XRN_VERTEXES_DIR "Vertex")
+set(XRN_GEOMETRIES_DIR "Geometry")
+set(XRN_COMPUTES_DIR "Compute")
 
 option(COMPILE_SERVER "Compile the server instead of the client" OFF)
 

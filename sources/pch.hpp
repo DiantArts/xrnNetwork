@@ -111,15 +111,13 @@ using ::std::string_literals::operator""s;
 using ::std::literals::string_view_literals::operator""sv;
 using ::std::chrono_literals::operator""ms;
 
-#define ASIO_STANDALONE
-#include <asio.hpp>
-
 // #define PRINT_ASSERTS
 // #define FORCE_PRINT
 // #define NO_DEBUG
 #include <xrn/Log.hpp>
 #include <xrn/Meta.hpp>
 #include <xrn/Util.hpp>
+#include <xrn/Network.hpp>
 
 #define NO_DEBUG
 
